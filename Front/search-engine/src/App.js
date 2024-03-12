@@ -1,20 +1,20 @@
+// App.js
 import React from 'react';
 import './App.css';
+import Result from './components/Result'; // Import the Result component
 
 function App() {
+  // Sample data for testing
+  const resultData = {
+    url: 'https://example.com',
+    description: 'A sample website',
+  };
+
   return (
     <div className="App">
       <header className="App-header">
-        {/* Your search box with placeholder and search icon */}
-        <div className="search-box">
-          <input
-            type="text"
-            placeholder="Search Here"
-            className="search-input"
-          />
-          {/* You can add a simple search icon or customize it later */}
-          <span className="search-icon">🔍</span>
-        </div>
+        {/* Render the Result component for testing */}
+        <Result {...resultData} />
       </header>
     </div>
   );

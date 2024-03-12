@@ -1,0 +1,17 @@
+/* Add your fancy styling for the result here */
+.result {
+    background-color: #f8f8f8;
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin: 10px;
+    border-radius: 8px;
+}
+
+.url {
+    font-weight: bold;
+    color: #0066cc;
+}
+
+.description {
+    margin-top: 8px;
+}
