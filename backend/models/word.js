@@ -1,14 +1,17 @@
-const { Schema, model }=require('mongoose');
+import { Schema, model } from 'mongoose';
+
 const Wordschema = new Schema({
-        word: {
+    word: {
         type: String,
-        },
-        docscount:{
-        type:Number,
-        },
-        idf:{
-        type:Number
-        }
+    },
+    docscount: {
+        type: Number,
+    },
+    idf: {
+        type: Number
+    }
 });
+
 const Words = model('Words', Wordschema);
-module.exports= { Words};
+
+export { Words };

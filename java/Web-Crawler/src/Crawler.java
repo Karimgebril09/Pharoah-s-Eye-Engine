@@ -7,8 +7,13 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
+import java.security.MessageDigest;    
+import java.security.NoSuchAlgorithmException; 
+import java.util.HashMap; 
+
 
 public class Crawler {
+       private static HashMap<String,Integer> visitedurls = new HashMap<>();
     private static final int THREAD_NUM=15;
     private static final int MAX_DEPTH = 5;//levels max
     private static final int MAX_QUEUE_SIZE = 1000;//max crawler size
@@ -129,9 +134,9 @@ public class Crawler {
 
             // Check if the content type is HTML to satisfy the part of only html docs
             String contentType = con.execute().contentType();
-            if (contentType != null && contentType.contains("text/html")) {
+            if (contentType != null && contentType.contains("text/html") && check_domain(url)) {
                 Document doc = con.get();
-                if (con.response().statusCode() == 200) {
+                if (con.response().statusCode() == 200 && check_if_page_Exists(doc)) {
                     System.out.println(Thread.currentThread().getName()+" Link: " + compactUrl);
                     System.out.println(doc.title());
                     synchronized (visitedUrls) {
@@ -153,5 +158,46 @@ public class Crawler {
 
         return null;
     }
+    private boolean check_domain(String url)
+    {
+        return url.contains(".com") || url.contains(".edu") || url.contains(".net") || url.contains(".gov") || url.contains(".org");
+    }
 
+    private boolean check_if_page_Exists(Document doc)
+    {
+        String shavalue=getsha(doc);
+        return visitedurls.containsKey(shavalue);
+    }
+    private String getsha(Document doc)
+    {
+        String htmlContent = doc.html();
+        try {
+            // Create a MessageDigest instance for SHA-256
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+
+            // Update the digest with the input string bytes
+            digest.update(htmlContent.getBytes());
+
+            // Compute the hash
+            byte[] hashedBytes = digest.digest();
+
+            // Convert the byte array to a hexadecimal string
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hashedBytes) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+
+
+            return hexString.toString();
+
+        } catch (NoSuchAlgorithmException e) {
+            // Handle NoSuchAlgorithmException
+            e.printStackTrace();
+        }
+        return "";
+    }
 }
