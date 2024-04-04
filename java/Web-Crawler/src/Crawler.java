@@ -17,18 +17,18 @@ public class Crawler {
     private static final int MAX_DEPTH = 5;//levels max
     private static final int MAX_QUEUE_SIZE = 1000;//max crawler size
     private static final String[] Seeds = {
-            "https://en.wikipedia.org/wiki/Main_Page",
-            "https://www.britannica.com/",
-            "https://www.nasa.gov/",
-            "https://www.nationalgeographic.com/",
-            "https://www.history.com/",
-            "https://www.scientificamerican.com/",
-            "https://www.bbc.com/",
-            "https://www.nytimes.com/",
-            "https://www.reddit.com/",
-            "https://www.youtube.com/",
-            "https://www.espn.com/",
-            "https://www.theguardian.com/uk/sport"
+        "https://en.wikipedia.org/wiki/Main_Page",
+        "https://www.britannica.com/",
+        "https://www.nasa.gov/",
+        "https://www.nationalgeographic.com/",
+        "https://www.history.com/",
+        "https://www.scientificamerican.com/",
+        "https://www.bbc.com/",
+        "https://www.nytimes.com/",
+        "https://www.reddit.com/",
+        "https://www.youtube.com/",
+        "https://www.espn.com/",
+        "https://www.theguardian.com/uk/sport"
             // Add more seeds as needed
     };
 
@@ -36,6 +36,35 @@ public class Crawler {
         // Initialize the queue with seed URLs
         Queue<String> UrlsQueue = new LinkedList<>(Arrays.asList(Seeds));
         Set<String> visitedUrls = new HashSet<>();
+        //crawl(UrlsQueue, visitedUrls,1);
+
+        Thread[] crawlerThreads=new Thread[THREAD_NUM];
+        for(int i=0;i<THREAD_NUM;i++){
+            crawlerThreads[i]=new Thread(new RunnableCrawler(UrlsQueue,visitedUrls));
+            crawlerThreads[i].start();
+        }
+
+        for(int i=0;i<THREAD_NUM;i++){
+            try {
+                crawlerThreads[i].join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private static class RunnableCrawler implements Runnable{
+        private Queue<String> UrlsQueue;
+        private Set<String> visitedUrls;
+
+        public RunnableCrawler(Queue<String> UrlsQueue ,  Set<String> visitedUrls){
+            this.UrlsQueue=UrlsQueue;
+            this.visitedUrls=visitedUrls;
+        }
+
+        public void run(){
+            crawl(UrlsQueue,visitedUrls,1);
+        }
         //crawl(UrlsQueue, visitedUrls,1);
 
         Thread[] crawlerThreads=new Thread[THREAD_NUM];
@@ -90,6 +119,9 @@ public class Crawler {
                         synchronized (UrlsQueue) {
                             UrlsQueue.offer(nextLink); // Add the new URL to the end of the queue
                         }
+                        synchronized (UrlsQueue) {
+                            UrlsQueue.offer(nextLink); // Add the new URL to the end of the queue
+                        }
                         crawl(UrlsQueue, visitedUrls, currentDepth + 1); // Recursive call with increased depth
                     }
                 }
@@ -109,8 +141,10 @@ public class Crawler {
 
             // Check if the URL is allowed based on the rules in robots.txt
             return !robotsTxtContent.contains(Thread.currentThread().getName()+" Disallow: " + uri.getPath());
+            return !robotsTxtContent.contains(Thread.currentThread().getName()+" Disallow: " + uri.getPath());
         } catch (Exception e) {
             // Handle exceptions
+            System.err.println(Thread.currentThread().getName()+" Error in Connecting to the robot.txt or in parsing: " + url + ": " + e.getMessage());
             System.err.println(Thread.currentThread().getName()+" Error in Connecting to the robot.txt or in parsing: " + url + ": " + e.getMessage());
             return false; // Assume the URL is not allowed in case of errors
         }
@@ -139,6 +173,9 @@ public class Crawler {
                 if (con.response().statusCode() == 200) {
                     System.out.println(Thread.currentThread().getName()+" Link: " + compactUrl);
                     System.out.println(doc.title());
+                    synchronized (visitedUrls) {
+                        visitedUrls.add(compactUrl);
+                    }
                     synchronized (visitedUrls) {
                         visitedUrls.add(compactUrl);
                     }
