@@ -1,19 +1,19 @@
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.*;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import java.io.IOException;
-import java.security.MessageDigest;    
-import java.security.NoSuchAlgorithmException; 
-import java.util.HashMap; 
-
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 
 public class Crawler {
-       private static HashMap<String,Integer> visitedurls = new HashMap<>();
+    private static HashMap<String,Integer> visitedurls = new HashMap<>();
+    private static final int THREAD_NUM=15;
     private static final int MAX_DEPTH = 5;//levels max
     private static final int MAX_QUEUE_SIZE = 1000;//max crawler size
     private static final String[] Seeds = {
@@ -34,10 +34,37 @@ public class Crawler {
 
     public static void main(String[] args) {
         // Initialize the queue with seed URLs
-        // Initialize the queue with seed URLs
         Queue<String> UrlsQueue = new LinkedList<>(Arrays.asList(Seeds));
         Set<String> visitedUrls = new HashSet<>();
-        crawl(UrlsQueue, visitedUrls,1);
+        //crawl(UrlsQueue, visitedUrls,1);
+
+        Thread[] crawlerThreads=new Thread[THREAD_NUM];
+        for(int i=0;i<THREAD_NUM;i++){
+            crawlerThreads[i]=new Thread(new RunnableCrawler(UrlsQueue,visitedUrls));
+            crawlerThreads[i].start();
+        }
+
+        for(int i=0;i<THREAD_NUM;i++){
+            try {
+                crawlerThreads[i].join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private static class RunnableCrawler implements Runnable{
+        private Queue<String> UrlsQueue;
+        private Set<String> visitedUrls;
+
+        public RunnableCrawler(Queue<String> UrlsQueue ,  Set<String> visitedUrls){
+            this.UrlsQueue=UrlsQueue;
+            this.visitedUrls=visitedUrls;
+        }
+
+        public void run(){
+            crawl(UrlsQueue,visitedUrls,1);
+        }
     }
 
     private static void crawl(Queue<String> UrlsQueue, Set<String> visitedUrls, int currentDepth) {
@@ -47,9 +74,12 @@ public class Crawler {
                 break;
             }
 
-            String currentUrl = UrlsQueue.poll();
-            if (visitedUrls.contains(currentUrl)) {
-                continue; // Skip if the seed has already been visited
+            String currentUrl;
+            synchronized (UrlsQueue) { //synchronize shared object to avoid corruption
+                currentUrl = UrlsQueue.poll();
+                if (visitedUrls.contains(currentUrl)) {
+                    continue; // Skip if the seed has already been visited
+                }
             }
 
             Document doc = request(currentUrl, visitedUrls);
@@ -57,7 +87,9 @@ public class Crawler {
                 for (Element link : doc.select("a[href]")) {
                     String nextLink = link.absUrl("href");
                     if (!visitedUrls.contains(nextLink) && currentDepth < MAX_DEPTH) {
-                        UrlsQueue.offer(nextLink); // Add the new URL to the end of the queue
+                        synchronized (UrlsQueue) {
+                            UrlsQueue.offer(nextLink); // Add the new URL to the end of the queue
+                        }
                         crawl(UrlsQueue, visitedUrls, currentDepth + 1); // Recursive call with increased depth
                     }
                 }
@@ -76,13 +108,14 @@ public class Crawler {
             String robotsTxtContent = robotsTxt.text();
 
             // Check if the URL is allowed based on the rules in robots.txt
-            return !robotsTxtContent.contains("Disallow: " + uri.getPath());
+            return !robotsTxtContent.contains(Thread.currentThread().getName()+" Disallow: " + uri.getPath());
         } catch (Exception e) {
             // Handle exceptions
-            System.err.println("Error in Connecting to the robot.txt or in parsing: " + url + ": " + e.getMessage());
+            System.err.println(Thread.currentThread().getName()+" Error in Connecting to the robot.txt or in parsing: " + url + ": " + e.getMessage());
             return false; // Assume the URL is not allowed in case of errors
         }
     }
+
     private static Document request(String url, Set<String> visitedUrls) {
         try {
             // Check if the URL is allowed based on robots.txt rules
@@ -101,12 +134,14 @@ public class Crawler {
 
             // Check if the content type is HTML to satisfy the part of only html docs
             String contentType = con.execute().contentType();
-            if (contentType != null && contentType.contains("text/html") && check_domain(url)) {
+            if (contentType != null && contentType.contains("text/html")) {
                 Document doc = con.get();
-                if (con.response().statusCode() == 200 && check_if_page_Exists(doc)) {
-                    System.out.println("Link: " + compactUrl);
+                if (con.response().statusCode() == 200) {
+                    System.out.println(Thread.currentThread().getName()+" Link: " + compactUrl);
                     System.out.println(doc.title());
-                    visitedUrls.add(compactUrl);
+                    synchronized (visitedUrls) {
+                        visitedUrls.add(compactUrl);
+                    }
                     return doc;
                 }
             }
@@ -123,17 +158,17 @@ public class Crawler {
 
         return null;
     }
-    private boolean check_domain(String url)
+    private static boolean check_domain(String url)
     {
         return url.contains(".com") || url.contains(".edu") || url.contains(".net") || url.contains(".gov") || url.contains(".org");
     }
 
-    private boolean check_if_page_Exists(Document doc)
+    private static boolean check_if_page_Exists(Document doc)
     {
         String shavalue=getsha(doc);
         return visitedurls.containsKey(shavalue);
     }
-    private String getsha(Document doc)
+    private static String getsha(Document doc)
     {
         String htmlContent = doc.html();
         try {
