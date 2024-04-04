@@ -1,6 +1,9 @@
 import { Schema, model } from 'mongoose';
 
+import { Schema, model } from 'mongoose';
+
 const docsschema = new Schema({
+    url: {
     url: {
         type: String,
     },
@@ -10,6 +13,7 @@ const docsschema = new Schema({
     Words: {
         type: Array,
         unique: true,
+    },
     },
 });
 
