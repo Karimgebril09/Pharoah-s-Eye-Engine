@@ -13,6 +13,7 @@ import java.util.HashMap;
 
 public class Crawler {
     private static HashMap<String,Integer> visitedurls = new HashMap<>();
+    private static HashMap<String,Integer> visitedurlsbody = new HashMap<>();
     private static final int THREAD_NUM=15;
     private static final int MAX_DEPTH = 5;//levels max
     private static final int MAX_QUEUE_SIZE = 1000;//max crawler size
@@ -57,6 +58,7 @@ public class Crawler {
         private Queue<String> UrlsQueue;
         private Set<String> visitedUrls;
 
+
         public RunnableCrawler(Queue<String> UrlsQueue ,  Set<String> visitedUrls){
             this.UrlsQueue=UrlsQueue;
             this.visitedUrls=visitedUrls;
@@ -66,6 +68,7 @@ public class Crawler {
             crawl(UrlsQueue,visitedUrls,1);
         }
     }
+    //private static HashMap<String,Integer> visitedurlsbody = new HashMap<>();
 
     private static void crawl(Queue<String> UrlsQueue, Set<String> visitedUrls, int currentDepth) {
         while (!UrlsQueue.isEmpty()) {
@@ -136,7 +139,7 @@ public class Crawler {
             String contentType = con.execute().contentType();
             if (contentType != null && contentType.contains("text/html")) {
                 Document doc = con.get();
-                if (con.response().statusCode() == 200) {
+                if (con.response().statusCode() == 200 && check_if_page_Exists(doc)) {
                     System.out.println(Thread.currentThread().getName()+" Link: " + compactUrl);
                     System.out.println(doc.title());
                     synchronized (visitedUrls) {
@@ -163,13 +166,20 @@ public class Crawler {
         return url.contains(".com") || url.contains(".edu") || url.contains(".net") || url.contains(".gov") || url.contains(".org");
     }
 
-    private static boolean check_if_page_Exists(Document doc)
-    {
-        String shavalue=getsha(doc);
-        return visitedurls.containsKey(shavalue);
+    private static boolean check_if_page_Exists(Document doc) {
+        String shaValue = getSHA(doc);
+        boolean result = visitedurlsbody.containsKey(shaValue);
+        if (!result) {
+            // Add SHA value to the map when page is visited
+            visitedurlsbody.put(shaValue, 1); // Assuming visitedurlsbody is a Map<String, Document>
+        }
+        else {
+            System.out.println("the web page already existed");
+        }
+        return !result;
     }
-    private static String getsha(Document doc)
-    {
+
+    private static String getSHA(Document doc) {
         String htmlContent = doc.html();
         try {
             // Create a MessageDigest instance for SHA-256
@@ -190,7 +200,6 @@ public class Crawler {
                 }
                 hexString.append(hex);
             }
-
 
             return hexString.toString();
 
