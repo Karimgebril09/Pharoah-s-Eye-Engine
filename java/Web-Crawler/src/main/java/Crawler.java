@@ -171,7 +171,7 @@ public class Crawler {
         boolean result = visitedurlsbody.containsKey(shaValue);
         if (!result) {
             // Add SHA value to the map when page is visited
-            visitedurlsbody.put(shaValue, 1); // Assuming visitedurlsbody is a Map<String, Document>
+            visitedurlsbody.put(shaValue, Integer.valueOf(1)); // Assuming visitedurlsbody is a Map<String, Document>
         }
         else {
             System.out.println("the web page already existed");

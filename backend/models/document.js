@@ -1,9 +1,9 @@
-import { Schema, model } from 'mongoose';
+
 
 import { Schema, model } from 'mongoose';
 
 const docsschema = new Schema({
-    url: {
+   
     url: {
         type: String,
     },
@@ -14,7 +14,7 @@ const docsschema = new Schema({
         type: Array,
         unique: true,
     },
-    },
+    
 });
 
 const document = model('document', docsschema);
