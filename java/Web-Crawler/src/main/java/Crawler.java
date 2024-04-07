@@ -3,6 +3,9 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import java.io.IOException;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -14,6 +17,8 @@ import java.util.HashMap;
 public class Crawler {
     private static HashMap<String,Integer> visitedurls = new HashMap<>();
     private static HashMap<String,Integer> visitedurlsbody = new HashMap<>();
+    private static BufferedWriter writer;
+
     private static final int THREAD_NUM=15;
     private static final int MAX_DEPTH = 5;//levels max
     private static final int MAX_QUEUE_SIZE = 1000;//max crawler size
@@ -37,6 +42,12 @@ public class Crawler {
         // Initialize the queue with seed URLs
         Queue<String> UrlsQueue = new LinkedList<>(Arrays.asList(Seeds));
         Set<String> visitedUrls = new HashSet<>();
+        try {
+            writer = new BufferedWriter(new FileWriter("output.txt"));
+        } catch (IOException e) {
+            System.err.println("Error initializing BufferedWriter: " + e.getMessage());
+        }
+
         //crawl(UrlsQueue, visitedUrls,1);
 
         Thread[] crawlerThreads=new Thread[THREAD_NUM];
@@ -52,6 +63,7 @@ public class Crawler {
                 e.printStackTrace();
             }
         }
+        closeWriter(); // close the writer
     }
 
     private static class RunnableCrawler implements Runnable{
@@ -143,6 +155,7 @@ public class Crawler {
                     System.out.println(Thread.currentThread().getName()+" Link: " + compactUrl);
                     System.out.println(doc.title());
                     synchronized (visitedUrls) {
+                        writeStringToFile(url);
                         visitedUrls.add(compactUrl);
                     }
                     return doc;
@@ -209,4 +222,26 @@ public class Crawler {
         }
         return "";
     }
-}
+
+    // used to extern the links
+
+    public static void writeStringToFile(String str) {
+        try {
+            writer.write(str);
+            writer.newLine() ; // Writing the string on a new line
+            System.out.println("String has been written to the file successfully.");
+        } catch (IOException e) {
+            System.err.println("Error writing to file: " + e.getMessage());
+        }
+    }
+
+    public static void closeWriter() {
+        try {
+            if (writer != null) {
+                writer.close();
+            }
+        } catch (IOException e) {
+            System.err.println("Error closing BufferedWriter: " + e.getMessage());
+        }
+    }
+    }
