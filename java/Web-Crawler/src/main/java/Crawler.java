@@ -2,9 +2,8 @@ import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import java.io.IOException;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
+
+import java.io.*;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -22,7 +21,8 @@ public class Crawler {
     private static final int THREAD_NUM=15;
     private static final int MAX_DEPTH = 5;//levels max
     private static final int MAX_QUEUE_SIZE = 1000;//max crawler size
-    private static final String[] Seeds = {
+    private static final String[] Seeds={};
+    /*private static final String[] Seeds = {
             "https://en.wikipedia.org/wiki/Main_Page",
             "https://www.britannica.com/",
             "https://www.nasa.gov/",
@@ -36,27 +36,41 @@ public class Crawler {
             "https://www.espn.com/",
             "https://www.theguardian.com/uk/sport"
             // Add more seeds as needed
-    };
+    };*/
 
     public static void main(String[] args) {
-        // Initialize the queue with seed URLs
-        Queue<String> UrlsQueue = new LinkedList<>(Arrays.asList(Seeds));
+        // Initialize the queue with seed URLs read from the file
+        Queue<String> UrlsQueue = new LinkedList<>();
         Set<String> visitedUrls = new HashSet<>();
         try {
-            writer = new BufferedWriter(new FileWriter("output.txt"));
+            BufferedReader reader = new BufferedReader(new FileReader("src/main/java/Seed.txt"));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                UrlsQueue.offer(line.trim()); // Add each seed URL to the queue
+            }
+            reader.close();
+        } catch (IOException e) {
+            System.err.println("Error reading seeds file: " + e.getMessage());
+            // If an error occurs while reading the file, use the default seeds array
+            UrlsQueue.addAll(Arrays.asList(Seeds));
+        }
+
+        // Open the BufferedWriter in append mode to truncate the file before writing
+        try {
+            writer = new BufferedWriter(new FileWriter("src/main/java/output", false));
         } catch (IOException e) {
             System.err.println("Error initializing BufferedWriter: " + e.getMessage());
         }
 
-        //crawl(UrlsQueue, visitedUrls,1);
+        // Rest of the code remains the same
 
-        Thread[] crawlerThreads=new Thread[THREAD_NUM];
-        for(int i=0;i<THREAD_NUM;i++){
-            crawlerThreads[i]=new Thread(new RunnableCrawler(UrlsQueue,visitedUrls));
+        Thread[] crawlerThreads = new Thread[THREAD_NUM];
+        for (int i = 0; i < THREAD_NUM; i++) {
+            crawlerThreads[i] = new Thread(new RunnableCrawler(UrlsQueue, visitedUrls));
             crawlerThreads[i].start();
         }
 
-        for(int i=0;i<THREAD_NUM;i++){
+        for (int i = 0; i < THREAD_NUM; i++) {
             try {
                 crawlerThreads[i].join();
             } catch (InterruptedException e) {
@@ -65,6 +79,7 @@ public class Crawler {
         }
         closeWriter(); // close the writer
     }
+
 
     private static class RunnableCrawler implements Runnable{
         private Queue<String> UrlsQueue;
@@ -228,7 +243,8 @@ public class Crawler {
     public static void writeStringToFile(String str) {
         try {
             writer.write(str);
-            writer.newLine() ; // Writing the string on a new line
+            writer.newLine(); // Writing the string on a new line
+            writer.flush(); // Flush the buffer to ensure the content is written immediately
             System.out.println("String has been written to the file successfully.");
         } catch (IOException e) {
             System.err.println("Error writing to file: " + e.getMessage());
