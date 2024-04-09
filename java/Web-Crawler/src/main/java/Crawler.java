@@ -21,7 +21,7 @@ public class Crawler {
 
     private static final int THREAD_NUM=15;
     private static final int MAX_DEPTH = 5;//levels max
-    private static final int MAX_QUEUE_SIZE = 1000;//max crawler size
+    public static final int MAX_QUEUE_SIZE = 1000;//max crawler size
     private static final String[] Seeds = {
             "https://en.wikipedia.org/wiki/Main_Page",
             "https://www.britannica.com/",
