@@ -18,3 +18,5 @@ const WordDocsSchema = new Schema({
 const WordDocs = model('Worddoc', WordDocsSchema);
 
 export { WordDocs };
+
+
