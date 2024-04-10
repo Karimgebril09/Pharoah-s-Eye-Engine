@@ -1,5 +1,4 @@
 import static com.mongodb.client.model.Filters.eq;
-
 import com.mongodb.MongoWriteException;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
@@ -32,7 +31,7 @@ public class testformongo {
         try (MongoClient client = MongoClients.create(connectionString)) {
             MongoDatabase db = client.getDatabase("test");
             MongoCollection<Document> col = db.getCollection("documents");
-
+            MongoCollection<Document> col2 = db.getCollection("Words");
             System.out.println("Connected to database");
 
             // Create unique index on the "_id" field

@@ -4,7 +4,26 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="cf3bdd7f-07dc-4d08-8b25-93fb0c35faca" name="Changes" comment="Added Base Crawler,Missing MultiThreading" />
+    <list default="true" id="cf3bdd7f-07dc-4d08-8b25-93fb0c35faca" name="Changes" comment="Added Base Crawler,Missing MultiThreading">
+      <change afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/java/Web-Crawler/src/main/java/QueryProcessing.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/java/Web-Crawler/src/main/java/RestApi.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/java/Web-Crawler/src/main/java/traffic.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/SearchEngine.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/SearchEngine.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/java/Web-Crawler/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/java/Web-Crawler/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/java/Web-Crawler/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/java/Web-Crawler/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/java/Web-Crawler/src/main/java/Ranker.java" beforeDir="false" afterPath="$PROJECT_DIR$/java/Web-Crawler/src/main/java/Ranker.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/java/Web-Crawler/src/main/java/testformongo.java" beforeDir="false" afterPath="$PROJECT_DIR$/java/Web-Crawler/src/main/java/testformongo.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/java/Web-Crawler/target/classes/Crawler$RunnableCrawler.class" beforeDir="false" afterPath="$PROJECT_DIR$/java/Web-Crawler/target/classes/Crawler$RunnableCrawler.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/java/Web-Crawler/target/classes/Crawler.class" beforeDir="false" afterPath="$PROJECT_DIR$/java/Web-Crawler/target/classes/Crawler.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/java/Web-Crawler/target/classes/Indexer$tags.class" beforeDir="false" afterPath="$PROJECT_DIR$/java/Web-Crawler/target/classes/Indexer$tags.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/java/Web-Crawler/target/classes/Indexer.class" beforeDir="false" afterPath="$PROJECT_DIR$/java/Web-Crawler/target/classes/Indexer.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/java/Web-Crawler/target/classes/Ranker.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/java/Web-Crawler/target/classes/main/java/output" beforeDir="false" afterPath="$PROJECT_DIR$/java/Web-Crawler/target/classes/main/java/output" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/java/Web-Crawler/target/classes/testformongo.class" beforeDir="false" afterPath="$PROJECT_DIR$/java/Web-Crawler/target/classes/testformongo.class" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -13,6 +32,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;salmamuhammede&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/salmamuhammede/Pharoah-s-Eye-Engine.git&quot;,
+    &quot;accountId&quot;: &quot;df6779ca-9695-4c36-8d22-35d2c800d36a&quot;
+  }
+}</component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
@@ -26,8 +57,10 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Application.Crawler.executor": "Run",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "D:/Web Sessions/SearchEngine/java/Web-Crawler",
@@ -37,11 +70,25 @@
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
     "project.structure.last.edited": "Libraries",
-    "project.structure.proportion": "0.0",
+    "project.structure.proportion": "0.15",
     "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\Web Sessions\SearchEngine\java\Web-Crawler" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9f38398b9061-18abd8497189-intellij.indexing.shared.core-IU-241.14494.240" />
+        <option value="bundled-js-predefined-1d06a55b98c1-74d2a5396914-JavaScript-IU-241.14494.240" />
+      </set>
+    </attachedChunks>
+  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -54,6 +101,13 @@
       <workItem from="1710255583471" duration="241000" />
       <workItem from="1710255871006" duration="64000" />
       <workItem from="1710256022010" duration="559000" />
+      <workItem from="1712684362731" duration="851000" />
+      <workItem from="1712685327850" duration="155000" />
+      <workItem from="1712753173049" duration="194000" />
+      <workItem from="1712753883655" duration="2110000" />
+      <workItem from="1712759294304" duration="241000" />
+      <workItem from="1712759605833" duration="602000" />
+      <workItem from="1712760404940" duration="214000" />
     </task>
     <task id="LOCAL-00001" summary="Added Base Crawler,Missing MultiThreading">
       <option name="closed" value="true" />
