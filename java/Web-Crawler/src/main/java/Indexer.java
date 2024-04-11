@@ -37,12 +37,12 @@ public class Indexer {
 
     public static void main(String[] args) throws IOException {
         try {
-            reader = new BufferedReader(new FileReader("output.txt"));
+            reader = new BufferedReader(new FileReader("src/main/java/output"));
         } catch (IOException e) {
             System.err.println("Error initializing BufferedReader: " + e.getMessage());
         }
         //readstopwords in hashset
-        fillSetFromFile("D:\\Pharoah_eye_project\\Pharoah-s-Eye-Engine\\java\\Web-Crawler\\src\\main\\java\\Stopwords.txt");
+        fillSetFromFile("src/main/java/Stopwords.txt");
         DBhandler=new Database();
         initDataBase();
         String url = readNextLine();

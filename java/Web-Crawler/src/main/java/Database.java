@@ -1,5 +1,6 @@
 import static com.mongodb.client.model.Filters.eq;
 
+import com.mongodb.MongoException;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import com.mongodb.client.MongoCollection;
@@ -52,6 +53,15 @@ public class Database {
             }
         }
         return newId;
+    }
+    public static Document getWordDoc(MongoCollection<Document> col, ObjectId Id) {
+        try {
+            Document document = col.find(new Document("_id", Id)).first();
+            return document;
+        } catch (MongoException e) {
+            System.err.println("Error retrieving document: " + e.getMessage());
+            return null;
+        }
     }
 
     public static void Wordinsertion(MongoCollection<Document> col, String Word, int docsCount, double idf, ArrayList<ObjectId> ArrayOfdocs) {
