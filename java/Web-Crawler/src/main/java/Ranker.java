@@ -12,68 +12,50 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoWriteException;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
-import com.mongodb.ConnectionString;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.IndexOptions;
-import com.mongodb.client.model.Indexes;
 import org.bson.Document;
 import org.bson.types.ObjectId;
+import com.mongodb.client.model.Sorts;
 
-/*import com.mongodb.client.model.IndexOptions;
-import com.mongodb.client.model.Indexes;
-import org.bson.types.ObjectId;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;*/
-import static com.mongodb.client.model.Filters.eq;
-
-import com.mongodb.*;
-import com.mongodb.client.model.IndexOptions;
-import com.mongodb.client.model.Indexes;
-import org.bson.Document;
-import org.bson.types.ObjectId;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-
-import java.util.*;
-
-import com.mongodb.client.*;
-import org.bson.Document;
-import org.bson.conversions.Bson;
 
 public class Ranker {
 
     public static Set<String> stopWords = new HashSet<>();
     public static MongoDatabase db;
+    public static MongoDatabase db2;
     public static MongoCollection<org.bson.Document> DocCollection;
     public static MongoCollection<org.bson.Document> WordsCollection;
     public static MongoCollection<org.bson.Document> WordDocCollection;
+    public static MongoCollection<org.bson.Document> Query;
     public static Database DBhandler;
-    
+
 
     public static void main(String[] args) throws IOException {
-        String query = "Search for documents about artificial intelligence and its impact on society."; ///to be modifed get from react
+        String query ; ///to be modifed get from react
         //ArrayList<String> afterProcessing = QueryProcessing(Query);
         String path="src/main/java/Stopwords.txt";//Step1 extracting StopWords
         try {
             getStopwords(path);
-            ArrayList<String> afterProcessing = queryProcessing(query);
-            HashSet<String> uniqueTerms = new HashSet<>(afterProcessing);
-
-
             //////////////////////////////////////////////tested before calling the database
             MongoClient client = createConnection();
             if (client == null) {
                 System.err.println("Failed to create connection");
                 return;
             }
-
-            ObjectId id = new ObjectId("66172eb9eb21ba702f7a9a37");
+            System.out.println("passed");
+            Document queryDocument = getLastInsertedQuery(client);
+            query=extractQuery(queryDocument);
+            System.out.println(query);
+            ArrayList<String> afterProcessing = queryProcessing(query);
+            System.out.println(afterProcessing);
+            //HashSet<String> uniqueTerms = new HashSet<>(afterProcessing);
+            //System.out.println(uniqueTerms);
+            client = createConnection();
+            ObjectId id = new ObjectId("6619b28e21fe393e948af663");
             Document document = getWordDoc(client, id);
+            HashMap<String, Object> DocWordDataa=new HashMap<>(document);
+            System.out.println(DocWordDataa);
 
             if (document != null) {
                 HashMap<String, Object> DocWordData = DocWordData(document);
@@ -84,9 +66,6 @@ public class Ranker {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        //HashMap<String, Object> DocWordData=new HashMap<>(document);
-        //System.out.println(DocWordData);*/
 
 
 
@@ -107,7 +86,7 @@ public class Ranker {
         try (client) {  // Ensure connection is closed after use
             db = client.getDatabase("test");
             WordDocCollection = db.getCollection("Word_Document");  // Not needed here
-
+            System.out.println(WordDocCollection.countDocuments());
             Document document = WordDocCollection.find(new Document("_id", id)).first();
             if (document == null) {
                 System.err.println("Document not found with ID: " + id);
@@ -116,6 +95,30 @@ public class Ranker {
             return document;
         } catch (MongoException e) {
             System.err.println("Error retrieving document: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public static Document getLastInsertedQuery(MongoClient client) {
+        try {
+            // Ensure connection is closed after use
+            try (client) {
+                 db2 = client.getDatabase("Salma");
+                MongoCollection<Document> queryCollection = db2.getCollection("query");
+
+                // Sort documents in descending order based on the _id field
+                Document lastQuery = queryCollection.find()
+                        .sort(Sorts.descending("_id"))
+                        .first();
+
+                if (lastQuery == null) {
+                    System.err.println("No documents found in the 'query' collection.");
+                    return null;
+                }
+                return lastQuery;
+            }
+        } catch (MongoException e) {
+            System.err.println("Error retrieving last inserted query: " + e.getMessage());
             return null;
         }
     }
@@ -211,30 +214,19 @@ public class Ranker {
     private static HashMap<String, Object> DocWordData(Document document) {
         HashMap<String, Object> details = new HashMap<>();
         details.put("_id", document.getObjectId("_id"));
-
-        // Access IDF as a number (assuming it's stored as a double)
         ObjectId Docid = document.getObjectId("Docid");
         details.put("Docid", Docid);
         Integer tf = document.getInteger("tf");
         details.put("tf", tf);
-
-        // Access the ArrayList of integers (assuming it's stored as an array)
         List<Integer> Positions = (List<Integer>) document.get("Positions");
         details.put("Positions", Positions);
-
-        // Add more details as needed based on your document schema
         return details;
     }
-   /* private  static ArrayList<String> QueryProcessing(String Query)
-    {
-        //Stemming
-        //removeStopWordds
-        //Quereyparsing
+    private static String extractQuery(Document document) {
+       String query = document.getString("Query");
+
+        return query;
     }
-    private static ArrayList<HashMap<String,Integer>>Convert(ArrayList<String>arr)
-    {
-        
-    }*/
 
 
 }
