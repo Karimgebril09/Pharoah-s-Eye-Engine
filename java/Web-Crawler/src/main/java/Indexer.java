@@ -20,16 +20,14 @@ public class Indexer {
     public static Set<String> stopwords = new HashSet<>();
     public static ArrayList<HashMap<String, Integer>> pos_wrd_Cnt;  // word appeard in position x n time in one doc
 
-    public static HashMap<String,Integer> WordDocsCount;   // words apeared in n docs
+    public static HashMap<String,Integer> WordDocsCount= new HashMap<String,Integer>();;   // words apeared in n docs
 
     public static HashMap<String, ArrayList<ObjectId>> DocsOfWord = new HashMap<String, ArrayList<ObjectId>>();// words apeared in n docs
 
     private static final int POSITIONS_SIZE = 7;
     ///////  DataBase  /////
-    public static MongoDatabase db;
-    public static MongoCollection<org.bson.Document> DocCollection;
-    public static MongoCollection<org.bson.Document> WordsCollection;
-    public static MongoCollection<org.bson.Document> WordDocCollection;
+
+
     public static Database DBhandler;
     private static int lengthOfDocument;
 
@@ -44,17 +42,18 @@ public class Indexer {
         //readstopwords in hashset
         fillSetFromFile("D:\\Pharoah_eye_project\\Pharoah-s-Eye-Engine\\java\\Web-Crawler\\src\\main\\java\\Stopwords.txt");
         DBhandler=new Database();
-        initDataBase();
+        DBhandler.initDataBase();
         String url = readNextLine();
         Document document;
         while (url != null) {
             lengthOfDocument=0;
             document = Jsoup.connect(url).get();
             handler(document);
-            ObjectId docid=DBhandler.insertDocument(DocCollection,url,Optional.of(popularity));
+            ObjectId docid=DBhandler.insertDocument(url,Optional.of(popularity));
             PassWordsToDB(docid);
             pos_wrd_Cnt.clear();
             url = readNextLine();
+            System.out.println("finished a doc");
         }
         insertAllWords();
         closeReader();
@@ -181,44 +180,30 @@ public class Indexer {
         return result.toString();
     }
 
-    public static void initDataBase() {
-        ConnectionString connectionString = new ConnectionString("mongodb://localhost:27017");
 
-        try (MongoClient client = MongoClients.create(connectionString)) {
-            db = client.getDatabase("test");
-            DocCollection = db.getCollection("documents");
-            WordsCollection = db.getCollection("Words");
-            WordDocCollection = db.getCollection("Word_Document");
-
-            System.out.println("Connected to database");
-
-            // Create unique index on the "_id" field
-            IndexOptions indexOptions = new IndexOptions();
-            DocCollection.createIndex(Indexes.ascending("_id"), indexOptions);
-            WordsCollection.createIndex(Indexes.ascending("_id"), indexOptions);
-            WordDocCollection.createIndex(Indexes.ascending("_id"), indexOptions);
-        }
-    }
-    // ArrayOfdocs;   pos_wrd_Cnt;
+//     ArrayOfdocs;  pos_wrd_Cnt;
     public static void PassWordsToDB(ObjectId docid) {
-        ArrayList<Integer> PositionOfWord=new ArrayList<Integer>(POSITIONS_SIZE);
+        ArrayList<Integer> PositionOfWord = new ArrayList<Integer>();
         String Word;
         float TF;
         ObjectId ReturnedId;
-        for(int i=0;i<pos_wrd_Cnt.get(POSITIONS_SIZE).size();i++)
+        int AllWordsSize=pos_wrd_Cnt.get(POSITIONS_SIZE).size();
+        for(int i=0;i<AllWordsSize;i++)
         {
             Word=pos_wrd_Cnt.get(POSITIONS_SIZE).entrySet().iterator().next().getKey();
             TF=pos_wrd_Cnt.get(POSITIONS_SIZE).entrySet().iterator().next().getValue()/(float)lengthOfDocument;
-            for(int j=0;j<POSITIONS_SIZE;j++)
-            {
-                PositionOfWord.set(j, pos_wrd_Cnt.get(i).get(Word));
-                pos_wrd_Cnt.get(i).remove(Word);
+            for(int j=0;j<POSITIONS_SIZE;j++) {
+                PositionOfWord.add(pos_wrd_Cnt.get(j).getOrDefault(Word, 0));
+                pos_wrd_Cnt.get(j).remove(Word);
             }
-            ReturnedId=DBhandler.insert_DocWordData(WordDocCollection,PositionOfWord,TF,docid);
+            pos_wrd_Cnt.get(POSITIONS_SIZE).remove(Word);
+            ReturnedId=DBhandler.insert_DocWordData(PositionOfWord,TF,docid);
             addValueToArrayList(Word,ReturnedId);
+            PositionOfWord.clear();
         }
 
     }
+
     // Retrieve the ArrayList associated with the key
     public static void addValueToArrayList(String key, ObjectId value) {
         // Retrieve the ArrayList associated with the key
@@ -235,13 +220,15 @@ public class Indexer {
         int NumberOfDocs;
         double IDF;
         ArrayList<ObjectId> arr;
-        for(int i=0;i<WordDocsCount.size();i++)
+        int WordDocsSize=WordDocsCount.size();
+        for(int i=0;i<WordDocsSize;i++)
         {
             Word=WordDocsCount.entrySet().iterator().next().getKey();
             NumberOfDocs=WordDocsCount.entrySet().iterator().next().getValue();
-            IDF=Math.log((double) Crawler.MAX_QUEUE_SIZE / NumberOfDocs);
+            IDF=Math.log((Crawler.getMaxQueueSize() / (double)NumberOfDocs));
             arr=DocsOfWord.get(Word);
-            DBhandler.Wordinsertion(WordsCollection,Word,NumberOfDocs,IDF,arr);
+            WordDocsCount.remove(Word);
+            DBhandler.Wordinsertion(Word,NumberOfDocs,IDF,arr);
         }
     }
 

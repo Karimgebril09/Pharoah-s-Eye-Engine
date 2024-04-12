@@ -21,7 +21,7 @@ public class Crawler {
 
     private static final int THREAD_NUM=15;
     private static final int MAX_DEPTH = 5;//levels max
-    public static final int MAX_QUEUE_SIZE = 1000;//max crawler size
+    private static final int MAX_QUEUE_SIZE = 1000;//max crawler size
     private static final String[] Seeds = {
             "https://en.wikipedia.org/wiki/Main_Page",
             "https://www.britannica.com/",
@@ -243,5 +243,8 @@ public class Crawler {
         } catch (IOException e) {
             System.err.println("Error closing BufferedWriter: " + e.getMessage());
         }
+    }
+    public static int getMaxQueueSize() {
+        return MAX_QUEUE_SIZE;
     }
     }

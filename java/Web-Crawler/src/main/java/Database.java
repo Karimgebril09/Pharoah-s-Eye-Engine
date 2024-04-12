@@ -1,5 +1,12 @@
 import static com.mongodb.client.model.Filters.eq;
 
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoException;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.Indexes;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import com.mongodb.client.MongoCollection;
@@ -9,69 +16,83 @@ import java.util.ArrayList;
 import java.util.Optional;
 
 public class Database {
+    public MongoDatabase db;
+    private MongoClient client1;
+    public MongoCollection<Document> DocCollection;
+    public MongoCollection<Document> WordsCollection;
+    public MongoCollection<Document> WordDocCollection;
 
-    public static ObjectId insertDocument(MongoCollection<Document> col, String url, Optional<Integer> popularity) {
-        ObjectId newId;
-        boolean inserted = false;
+    public void initDataBase() {
+        ConnectionString connectionString = new ConnectionString("mongodb://localhost:27017");
 
-        try {
-            while (!inserted) {
-                newId = new ObjectId();
-                Document existingDoc = col.find(Filters.eq("_id", newId)).first();
-                if (existingDoc == null) {
-                    Document doc = new Document("_id", newId)
-                            .append("url", url)
-                            .append("popularity", popularity.orElse(null));
+        client1 = MongoClients.create(connectionString);
+        db = client1.getDatabase("test");
+        DocCollection = db.getCollection("documents");
+        WordsCollection = db.getCollection("Words");
+        WordDocCollection = db.getCollection("Word_Document");
 
-                    col.insertOne(doc);
-                    System.out.println("Document inserted successfully");
-                    inserted = true;
-                    return newId;
-                }
-            }
-        } catch (Exception e) {
-            // Handle any exceptions that occur during database operations
-            e.printStackTrace();
+        System.out.println("Connected to database");
+
+        // Create unique index on the "_id" field
+        IndexOptions indexOptions = new IndexOptions();
+        DocCollection.createIndex(Indexes.ascending("_id"), indexOptions);
+        WordsCollection.createIndex(Indexes.ascending("_id"), indexOptions);
+        WordDocCollection.createIndex(Indexes.ascending("_id"), indexOptions);
+        System.out.println(DocCollection);
         }
 
-        return null; // Return null if insertion failed
+    public ObjectId insertDocument(String url, Optional<Integer> popularity) {
+        ObjectId newId = null;
+        boolean isUniqueId = false;
+        while (!isUniqueId) {
+            newId = new ObjectId();
+            Document existingDoc = DocCollection.find(new Document("_id", newId)).first();
+            if (existingDoc == null) {
+                Document doc = new Document();
+                doc.append("_id", newId);
+                doc.append("url", url);
+                // Check if popularity is present, then insert it, otherwise insert null
+                popularity.ifPresentOrElse(
+                        pop -> doc.append("popularity", pop),
+                        () -> doc.append("popularity", null)
+                );
+
+                DocCollection.insertOne(doc);
+                isUniqueId = true;
+            }
+        }
+        return newId;
     }
-    public static ObjectId insert_DocWordData(MongoCollection<Document> col,ArrayList<Integer> Positions,float tf,ObjectId Docid) {
+    public ObjectId insert_DocWordData(ArrayList<Integer> Positions,float tf,ObjectId Docid) {
         ObjectId newId = null;
         boolean Inserted = false;
         while (!Inserted) {
             newId = new ObjectId();
-            Document existingDoc = col.find(new Document("_id", newId)).first();
+            Document existingDoc = WordDocCollection.find(new Document("_id", newId)).first();
             if (existingDoc == null) {
                 Document doc = new Document();
-                doc.append("Docid",Docid).append("tf",tf).append("Positions", Positions);
+                doc.append("_id",newId).append("Docid",Docid).append("tf",tf).append("Positions", Positions);
 
-                col.insertOne(doc);
-                System.out.println("Word_Doc inserted successfully");
+                WordDocCollection.insertOne(doc);
                 Inserted = true;
             }
         }
         return newId;
     }
 
-    public static void Wordinsertion(MongoCollection<Document> col, String Word, int docsCount, double idf, ArrayList<ObjectId> ArrayOfdocs) {
+    public void Wordinsertion( String Word, int docsCount, double idf, ArrayList<ObjectId> ArrayOfdocs) {
 
         ObjectId newId;
         boolean Inserted = false;
         while (!Inserted) {
             newId = new ObjectId();
-            Document existingDoc = col.find(new Document("_id", newId)).first();
+            Document existingDoc = WordsCollection.find(new Document("_id", newId)).first();
             if (existingDoc == null) {
                 Document doc = new Document();
                 doc.append("word",Word).append("DocsCount",docsCount).append("IDF",idf).append("ArrayOfdocs",ArrayOfdocs);
-                col.insertOne(doc);
-                System.out.println("Word inserted successfully");
+                WordsCollection.insertOne(doc);
                 Inserted = true;
             }
         }
     }
-
-
-
-
 }
