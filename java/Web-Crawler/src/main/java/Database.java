@@ -79,6 +79,15 @@ public class Database {
         }
         return newId;
     }
+    public static Document getWordDoc(MongoCollection<Document> col, ObjectId Id) {
+        try {
+            Document document = col.find(new Document("_id", Id)).first();
+            return document;
+        } catch (MongoException e) {
+            System.err.println("Error retrieving document: " + e.getMessage());
+            return null;
+        }
+    }
 
     public void Wordinsertion( String Word, int docsCount, double idf, ArrayList<ObjectId> ArrayOfdocs) {
 
