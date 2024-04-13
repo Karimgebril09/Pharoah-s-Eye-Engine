@@ -15,7 +15,7 @@ app.use(cors());
 //const PORT = process.env.PORT || 8080;
 
 console.log('Before connecting to the database...');
-mongoose.connect(``)
+mongoose.connect(`mongodb://127.0.0.1:27017/Salma`)
     .then(() => {
         console.log('Database is connected');
         console.log('After connecting to the database...');

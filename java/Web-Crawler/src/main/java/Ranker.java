@@ -29,6 +29,8 @@ public class Ranker {
     public static MongoCollection<org.bson.Document> WordDocCollection;
     public static MongoCollection<org.bson.Document> Query;
     public static Database DBhandler;
+    public static ArrayList<HashMap<String, Object>> wordColofQuery = new ArrayList<>();
+
 
 
     public static void main(String[] args) throws IOException {
@@ -43,7 +45,7 @@ public class Ranker {
                 System.err.println("Failed to create connection");
                 return;
             }
-            System.out.println("passed");
+
             Document queryDocument = getLastInsertedQuery(client);
             query=extractQuery(queryDocument);
             System.out.println(query);
@@ -51,25 +53,41 @@ public class Ranker {
             System.out.println(afterProcessing);
             //HashSet<String> uniqueTerms = new HashSet<>(afterProcessing);
             //System.out.println(uniqueTerms);
-            client = createConnection();
-            ObjectId id = new ObjectId("6619b28e21fe393e948af663");
+
+            System.out.println("passed");
+            /*ObjectId id = new ObjectId("6619c365fb496a42743a0391");
             Document document = getWordDoc(client, id);
             HashMap<String, Object> DocWordDataa=new HashMap<>(document);
-            System.out.println(DocWordDataa);
+            System.out.println(DocWordDataa);*/
+            //ObjectId id = new ObjectId("6619c365fb496a42743a0390");
+            client = createConnection();
+            Document document;
+            HashMap<String, Object> wordData;
+            for (String token : afterProcessing) {
+                client = createConnection();
+                if(token !=null){
+                document = getWord(client, token);
+                //System.out.println(DocDataa);
+                if (document != null) {
+                    //HashMap<String, Object> DocWordData = DocWordData(document);
+                    //System.out.println(DocWordData);
+                    //HashMap<String, Object> DocData = docData(document);
+                    //System.out.println(DocData.get("url"));
+                    wordData = wordData(document);
+                    System.out.println(wordData);
+                    wordColofQuery.add(wordData);
 
-            if (document != null) {
-                HashMap<String, Object> DocWordData = DocWordData(document);
-                System.out.println(DocWordData);
-            } else {
-                System.out.println("Failed to retrieve document data");
+                } else {
+                    System.out.println("this word is not in the indexer");
+                }}
+
             }
+
+
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-
-
-
     }
     public static MongoClient createConnection() {
         ConnectionString connectionString = new ConnectionString("mongodb://localhost:27017");
@@ -98,7 +116,39 @@ public class Ranker {
             return null;
         }
     }
-
+    public static Document getWord(MongoClient client, String word) {
+        try (client) {  // Ensure connection is closed after use
+            db = client.getDatabase("test");
+            WordsCollection = db.getCollection("Words");
+           // System.out.println(WordsCollection.countDocuments());
+            Document document = WordsCollection.find(new Document("word", word)).first(); // Update the query
+            if (document == null) {
+                System.out.println("Document not found with word: " + word);
+                return null;
+            }
+            System.out.println("Document was found with word: " + word);
+            return document;
+        } catch (MongoException e) {
+            System.out.println("Error retrieving document: " + e.getMessage());
+            return null;
+        }
+    }
+    public static Document getDoc(MongoClient client, ObjectId id) {
+        try (client) {  // Ensure connection is closed after use
+            db = client.getDatabase("test");
+            DocCollection = db.getCollection("documents");  // Not needed here
+            System.out.println(DocCollection.countDocuments());
+            Document document = DocCollection.find(new Document("_id", id)).first();
+            if (document == null) {
+                System.err.println("Document not found with ID: " + id);
+                return null;
+            }
+            return document;
+        } catch (MongoException e) {
+            System.err.println("Error retrieving document: " + e.getMessage());
+            return null;
+        }
+    }
     public static Document getLastInsertedQuery(MongoClient client) {
         try {
             // Ensure connection is closed after use
@@ -123,32 +173,33 @@ public class Ranker {
         }
     }
     public static ArrayList<String>queryProcessing(String query) throws IOException {
-        ArrayList<String>datbseQuery=new ArrayList<>();
-        query = query.toLowerCase();//to easyitfor stopWords Removal
-        // 2. Tokenize the query (split into words)
-        ArrayList<Document>queryInfo=new ArrayList<>();
+        ArrayList<String> datbseQuery = new ArrayList<>();
+       // query = query.toLowerCase(); // Convert query to lowercase for easier stopWords removal
+        ArrayList<Document> queryInfo = new ArrayList<>();
         String[] tokens = query.split("\\s+");
 
         for (String token : tokens) {
             try {
-                token = removeStopWords(token);
-                //System.out.println(token);
+                token = removeStopWords(token); // Remove stop words
+                if (token != null) { // Check if token is not null after stop words removal
+                    token = Stemming(token); // Perform stemming
+                    if (token != null) { // Check if token is not null after stemming
+                        token = token.trim(); // Trim leading and trailing whitespace
+                        if (!token.isEmpty()) { // Check if token is not empty after trimming
+                            datbseQuery.add(token); // Add token to the list
+                        }
+                    }
+                }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            try {
-                token = Stemming(token);
-                //System.out.println(token);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            //System.out.println(token);
-            datbseQuery.add(token);
         }
+
         System.out.println("Tokens of the query:");
         for (String token : datbseQuery) {
             System.out.println(token);
         }
+
         return datbseQuery;
     }
     public static void getStopwords(String filePath) throws IOException {
@@ -159,12 +210,7 @@ public class Ranker {
                 String word = scanner.nextLine().trim();
                 stopWords.add(word);
             }
-
             scanner.close();
-
-           // System.out.println("Unique words in the file:");
-            //System.out.println(stopWords);
-
         } catch (FileNotFoundException e) {
             System.out.println("Error: File not found at " + filePath);
         }
@@ -196,19 +242,22 @@ public class Ranker {
         double score=0.0;
         return score;
     }
-    private static HashMap<String, Object> processWordDocument(Document document) {
+    private static HashMap<String, Object> docData(Document document) {
         HashMap<String, Object> details = new HashMap<>();
+        details.put("_id", document.getObjectId("_id"));
+        details.put("url", document.getString("url"));
+        Integer pop = document.getInteger("popularity");
+        details.put("popularly", pop);
+        return details;
+    }
+    private static HashMap<String, Object> wordData(Document document) {
+        HashMap<String, Object> details = new HashMap<>();
+        details.put("_id", document.getObjectId("_id"));
         details.put("word", document.getString("word"));
-
-        // Access IDF as a number (assuming it's stored as a double)
-        double idf = document.getDouble("idf");
-        details.put("idf", idf);
-
-        // Access the ArrayList of integers (assuming it's stored as an array)
-        List<Integer> ids = (List<Integer>) document.get("ids");
-        details.put("ids", ids);
-
-        // Add more details as needed based on your document schema
+        details.put("DocsCount", document.getInteger("DocsCount"));
+        details.put("IDF", document.getDouble("IDF"));
+        List<ObjectId> docslinks = (List<ObjectId>) document.get("Arrayofdocs");
+        details.put("Arrayofdocs", docslinks);
         return details;
     }
     private static HashMap<String, Object> DocWordData(Document document) {
@@ -216,7 +265,7 @@ public class Ranker {
         details.put("_id", document.getObjectId("_id"));
         ObjectId Docid = document.getObjectId("Docid");
         details.put("Docid", Docid);
-        Integer tf = document.getInteger("tf");
+        Double tf = document.getDouble("tf");
         details.put("tf", tf);
         List<Integer> Positions = (List<Integer>) document.get("Positions");
         details.put("Positions", Positions);
@@ -224,7 +273,6 @@ public class Ranker {
     }
     private static String extractQuery(Document document) {
        String query = document.getString("Query");
-
         return query;
     }
 

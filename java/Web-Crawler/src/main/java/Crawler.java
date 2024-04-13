@@ -43,7 +43,7 @@ public class Crawler {
         Queue<String> UrlsQueue = new LinkedList<>(Arrays.asList(Seeds));
         Set<String> visitedUrls = new HashSet<>();
         try {
-            writer = new BufferedWriter(new FileWriter("output.txt"));
+            writer = new BufferedWriter(new FileWriter("src/main/java/output"));
         } catch (IOException e) {
             System.err.println("Error initializing BufferedWriter: " + e.getMessage());
         }
