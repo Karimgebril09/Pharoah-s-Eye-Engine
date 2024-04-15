@@ -9,7 +9,6 @@ import java.util.Scanner;
 import java.util.HashMap;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoException;
-import com.mongodb.MongoWriteException;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
@@ -17,10 +16,7 @@ import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import com.mongodb.client.model.Sorts;
-
-
 public class Ranker {
-
     public static Set<String> stopWords = new HashSet<>();
     public static MongoDatabase db;
     public static MongoDatabase db2;
@@ -30,9 +26,7 @@ public class Ranker {
     public static MongoCollection<org.bson.Document> Query;
     public static Database DBhandler;
     public static ArrayList<HashMap<String, Object>> wordColofQuery = new ArrayList<>();
-
-
-
+    public static HashMap<ObjectId, Double> scoreshashmap = new HashMap<>();
     public static void main(String[] args) throws IOException {
         String query ; ///to be modifed get from react
         //ArrayList<String> afterProcessing = QueryProcessing(Query);
@@ -45,7 +39,6 @@ public class Ranker {
                 System.err.println("Failed to create connection");
                 return;
             }
-
             Document queryDocument = getLastInsertedQuery(client);
             query=extractQuery(queryDocument);
             System.out.println(query);
@@ -53,28 +46,30 @@ public class Ranker {
             System.out.println(afterProcessing);
             //HashSet<String> uniqueTerms = new HashSet<>(afterProcessing);
             //System.out.println(uniqueTerms);
-
+           // client = createConnection();
             System.out.println("passed");
-            /*ObjectId id = new ObjectId("6619c365fb496a42743a0391");
-            Document document = getWordDoc(client, id);
+           /* ObjectId id = new ObjectId("6619c365fb496a42743a0391");
+            ObjectId did = new ObjectId("6619c365fb496a42743a0390");
+            Document document = getWordDoc2(client, id,did);
             HashMap<String, Object> DocWordDataa=new HashMap<>(document);
-            System.out.println(DocWordDataa);*/
+            System.out.println(DocWordDataa.get("tf"));*/
             //ObjectId id = new ObjectId("6619c365fb496a42743a0390");
-            client = createConnection();
+            //client = createConnection();
             Document document;
             HashMap<String, Object> wordData;
             for (String token : afterProcessing) {
                 client = createConnection();
                 if(token !=null){
                 document = getWord(client, token);
-                //System.out.println(DocDataa);
+
                 if (document != null) {
+                    //System.out.println( );
                     //HashMap<String, Object> DocWordData = DocWordData(document);
                     //System.out.println(DocWordData);
                     //HashMap<String, Object> DocData = docData(document);
                     //System.out.println(DocData.get("url"));
                     wordData = wordData(document);
-                    System.out.println(wordData);
+                    System.out.println(wordData.get("_id"));
                     wordColofQuery.add(wordData);
 
                 } else {
@@ -82,9 +77,37 @@ public class Ranker {
                 }}
 
             }
+            double score;
+            HashMap<ObjectId, Double> temphash = new HashMap<>();
+            HashMap<String, Object> temphash2;
 
+            for (HashMap<String, Object> wordDataMap : wordColofQuery) {
+                List<ObjectId> arrayOfDocs = (List<ObjectId>) wordDataMap.get("ArrayOfdocs");
+                if (arrayOfDocs != null) {
+                    for (ObjectId temp : arrayOfDocs) {
+                        client = createConnection();
+                        Document doc = getWordDoc(client, temp);
+                        if (doc != null) {
+                            // Populate temphash2 with data from the document
+                            temphash2 = DocWordData(doc);
+                            score = (Double) wordDataMap.get("IDF") * (Double) temphash2.get("tf");
+                            ObjectId docId = (ObjectId) temphash2.get("Docid");
+                            double currentScore = temphash.getOrDefault(docId, 0.0);
+                            temphash.put(docId, currentScore + score);
+                        }
+                    }
+                } else {
+                    System.err.println("ArrayOfdocs is null in wordDataMap: " + wordDataMap);
+                }
+                System.out.println("passed");
+            }
 
-
+            // Print temphash
+            for (Map.Entry<ObjectId, Double> entry : temphash.entrySet()) {
+                ObjectId key = entry.getKey();
+                Double value = entry.getValue();
+                System.out.println(key + ": " + value);
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -108,6 +131,25 @@ public class Ranker {
             Document document = WordDocCollection.find(new Document("_id", id)).first();
             if (document == null) {
                 System.err.println("Document not found with ID: " + id);
+                return null;
+            }
+            return document;
+        } catch (MongoException e) {
+            System.err.println("Error retrieving document: " + e.getMessage());
+            return null;
+        }
+    }
+    public static Document getWordDoc2(MongoClient client, ObjectId id, ObjectId docid) {
+        try (client) {  // Ensure connection is closed after use
+            db = client.getDatabase("test");
+            WordDocCollection = db.getCollection("Word_Document");  // Not needed here
+            System.out.println(WordDocCollection.countDocuments());
+            // Build the query with both _id and docid conditions
+            Document query = new Document("_id", id).append("Docid", docid);
+
+            Document document = WordDocCollection.find(query).first();
+            if (document == null) {
+                System.err.println("Document not found with ID: " + id + " and Docid: " + docid);
                 return null;
             }
             return document;
@@ -256,8 +298,19 @@ public class Ranker {
         details.put("word", document.getString("word"));
         details.put("DocsCount", document.getInteger("DocsCount"));
         details.put("IDF", document.getDouble("IDF"));
-        List<ObjectId> docslinks = (List<ObjectId>) document.get("Arrayofdocs");
-        details.put("Arrayofdocs", docslinks);
+        // Handle Arrayofdocs field
+        List<ObjectId> docsLinks = new ArrayList<>();
+        List<?> rawLinks = document.getList("ArrayOfdocs", Object.class);
+        if (rawLinks != null) {
+            for (Object rawLink : rawLinks) {
+                if (rawLink instanceof ObjectId) {
+                    ObjectId objectId = (ObjectId) rawLink;
+                    docsLinks.add(objectId);
+                }
+            }
+        }
+        details.put("ArrayOfdocs", docsLinks);
+
         return details;
     }
     private static HashMap<String, Object> DocWordData(Document document) {
