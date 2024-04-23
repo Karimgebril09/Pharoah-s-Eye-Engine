@@ -56,7 +56,7 @@ public class Indexer {
                 lengthOfDocument = 0;
                 document = Jsoup.connect(url).get();
                 handler(document);
-                ObjectId docid = DBhandler.insertDocument(url, Optional.of(popularity));
+                ObjectId docid = DBhandler.insertDocument(url, Optional.of(popularity),document.body().text(),document.select("title").text(),document.select("p").text());
                 PassWordsToDB(docid);
                 pos_wrd_Cnt.clear();
                 System.out.println("finished a doc");
