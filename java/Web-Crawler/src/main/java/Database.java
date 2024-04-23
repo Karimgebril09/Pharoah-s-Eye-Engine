@@ -39,7 +39,7 @@ public class Database {
         System.out.println(DocCollection);
         }
 
-    public ObjectId insertDocument(String url, Optional<Integer> popularity) {
+    public ObjectId insertDocument(String url, Optional<Integer> popularity, String body) {
         ObjectId newId = null;
         boolean isUniqueId = false;
         while (!isUniqueId) {
@@ -49,6 +49,7 @@ public class Database {
                 Document doc = new Document();
                 doc.append("_id", newId);
                 doc.append("url", url);
+                doc.append("body", body); // Inserting the body of the document
                 // Check if popularity is present, then insert it, otherwise insert null
                 popularity.ifPresentOrElse(
                         pop -> doc.append("popularity", pop),

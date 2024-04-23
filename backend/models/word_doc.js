@@ -1,22 +1,17 @@
 import { Schema, model } from 'mongoose';
 
-const WordDocsSchema = new Schema({
-    wordid: {
-        type: Schema.Types.ObjectId,
-    },
-    docid: {
+const Word_Document = new Schema({
+    Docid: {
         type: Schema.Types.ObjectId,
     },
     tf: {
         type: Number,
     },
-    positions: {
+    Positions: {
         type: Array,
     }
 });
 
-const WordDocs = model('Worddoc', WordDocsSchema);
+const Word_Documentt = model('Word_Document', Word_Document,'Word_Document');
 
-export { WordDocs };
-
-
+export { Word_Documentt };

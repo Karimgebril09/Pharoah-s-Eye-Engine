@@ -1,0 +1,126 @@
+[
+    {
+        "url": "https://www.apple.com",
+        "description": "Apple - iPhone, iPad, Mac, and more"
+    },
+    {
+        "url": "https://www.microsoft.com",
+        "description": "Microsoft - official website"
+    },
+    {
+        "url": "https://www.netflix.com",
+        "description": "Netflix - streaming service"
+    },
+    {
+        "url": "https://www.spotify.com",
+        "description": "Spotify - music streaming platform"
+    },
+    {
+        "url": "https://www.reddit.com",
+        "description": "Reddit - social news aggregation"
+    },
+    {
+        "url": "https://www.twitch.tv",
+        "description": "Twitch - live streaming platform"
+    },
+    {
+        "url": "https://www.ebay.com",
+        "description": "eBay - online marketplace"
+    },
+    {
+        "url": "https://www.udemy.com",
+        "description": "Udemy - online learning platform"
+    },
+    {
+        "url": "https://www.airbnb.com",
+        "description": "Airbnb - vacation rentals"
+    },
+    {
+        "url": "https://www.nytimes.com",
+        "description": "The New York Times - news website"
+    },
+    {
+        "url": "https://www.cnn.com",
+        "description": "CNN - news and information"
+    },
+    {
+        "url": "https://www.bbc.com",
+        "description": "BBC - British Broadcasting Corporation"
+    },
+    {
+        "url": "https://www.forbes.com",
+        "description": "Forbes - business news and financial information"
+    },
+    {
+        "url": "https://www.wikipedia.org",
+        "description": "Wikipedia - free encyclopedia"
+    },
+    {
+        "url": "https://www.imdb.com",
+        "description": "IMDb - internet movie database"
+    },
+    {
+        "url": "https://www.quora.com",
+        "description": "Quora - question and answer platform"
+    },
+    {
+        "url": "https://www.gmail.com",
+        "description": "Gmail - email service by Google"
+    },
+    {
+        "url": "https://www.stackoverflow.com",
+        "description": "Stack Overflow - programming Q&A"
+    },
+    {
+        "url": "https://www.instagram.com",
+        "description": "Instagram - photo and video sharing"
+    },
+    {
+        "url": "https://www.facebook.com",
+        "description": "Facebook - social networking"
+    },
+    {
+        "url": "https://www.twitter.com",
+        "description": "Twitter - social media platform"
+    },
+    {
+        "url": "https://www.linkedin.com",
+        "description": "LinkedIn - professional networking"
+    },
+    {
+        "url": "https://www.pinterest.com",
+        "description": "Pinterest - visual discovery platform"
+    },
+    {
+        "url": "https://www.github.com",
+        "description": "GitHub - version control platform"
+    },
+    {
+        "url": "https://www.adobe.com",
+        "description": "Adobe - creative software solutions"
+    },
+    {
+        "url": "https://www.ibm.com",
+        "description": "IBM - technology and consulting company"
+    },
+    {
+        "url": "https://www.oracle.com",
+        "description": "Oracle - integrated cloud applications and platform services"
+    },
+    {
+        "url": "https://www.docker.com",
+        "description": "Docker - containerization platform"
+    },
+    {
+        "url": "https://www.wikipedia.org",
+        "description": "Wikipedia - free encyclopedia"
+    },
+    {
+        "url": "https://www.reddit.com",
+        "description": "Reddit - social news aggregation"
+    },
+    {
+        "url": "https://www.youtube.com",
+        "description": "YouTube - video sharing platform"
+    }
+]

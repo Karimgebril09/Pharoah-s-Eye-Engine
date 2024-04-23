@@ -50,12 +50,12 @@ public class testformongo {
 
 
 
-            //insertDocument(col,  Optional.of(6), pos);
+            insertDocument(WordDocCollection,  Optional.of(6), pos);
             //insertDocument(col, "https://example2.commmm", Optional.of(6), words2);
-            ObjectId id = new ObjectId("66172eb9eb21ba702f7a9a37");
+           /* ObjectId id = new ObjectId("66172eb9eb21ba702f7a9a37");
             Document document=getWordDoc(WordDocCollection,id);
             HashMap<String, Object> DocWordData=new HashMap<>(document);
-            System.out.println(DocWordData);
+            System.out.println(DocWordData);*/
 
             //System.out.println("Documents inserted successfully");
         } catch (MongoWriteException e) {
