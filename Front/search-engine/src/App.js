@@ -3,13 +3,10 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import './App.css';
 import Result from './components/Result'; // Import the Result component
+import Results from './components/Results';
+import resultData from "./components/Urls.json"
 
 function App() {
-  // Sample data for testing
-  const resultData = {
-    url: 'https://example.com',
-    description: 'A sample website',
-  };
 
   return (
     <Router>
@@ -19,7 +16,8 @@ function App() {
         {/* Render the Result component for testing */}
         <div className="content">
           <Switch>
-            <Route exact path="/"><Result /></Route>            
+            <Route exact path="/"><Result /></Route>
+            <Route exact path="/results"> <Results resultData={resultData} /> </Route>                        
           </Switch>
         </div>
         
@@ -27,6 +25,7 @@ function App() {
     </div>
    </Router>
   );
+  
 }
 
 export default App;
