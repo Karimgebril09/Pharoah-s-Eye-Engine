@@ -2,24 +2,22 @@ import static com.mongodb.client.model.Filters.eq;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoException;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.*;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import org.bson.Document;
 import org.bson.types.ObjectId;
-import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Optional;
 
 public class Database {
     public MongoDatabase db;
     private MongoClient client1;
     public MongoCollection<Document> DocCollection;
-    public MongoCollection<Document> WordsCollection;
+    public static MongoCollection<Document> WordsCollection;
     public MongoCollection<Document> WordDocCollection;
 
     public void initDataBase() {
@@ -63,6 +61,7 @@ public class Database {
         }
         return newId;
     }
+
     public ObjectId insert_DocWordData(ArrayList<Integer> Positions,float tf,ObjectId Docid) {
         ObjectId newId = null;
         boolean Inserted = false;
@@ -79,6 +78,7 @@ public class Database {
         }
         return newId;
     }
+
     public static Document getWordDoc(MongoCollection<Document> col, ObjectId Id) {
         try {
             Document document = col.find(new Document("_id", Id)).first();
@@ -89,19 +89,86 @@ public class Database {
         }
     }
 
-    public void Wordinsertion( String Word, int docsCount, double idf, ArrayList<ObjectId> ArrayOfdocs) {
 
-        ObjectId newId;
-        boolean Inserted = false;
-        while (!Inserted) {
-            newId = new ObjectId();
-            Document existingDoc = WordsCollection.find(new Document("_id", newId)).first();
-            if (existingDoc == null) {
-                Document doc = new Document();
-                doc.append("word",Word).append("DocsCount",docsCount).append("IDF",idf).append("ArrayOfdocs",ArrayOfdocs);
-                WordsCollection.insertOne(doc);
-                Inserted = true;
+    /*
+     * 1- call in main get all prev words
+     * 2- get init Number
+     * 3-check in while that the url doesn't exist in db
+     * */
+    public void Wordinsertion( String Word, int docsCount, double idf, ArrayList<ObjectId> ArrayOfdocs) {
+        Document DocExist = WordsCollection.find(new Document("word", Word)).first();
+        if(DocExist==null)
+        {
+            ObjectId newId;
+            boolean Inserted = false;
+            while (!Inserted) {
+                newId = new ObjectId();
+                Document existingDoc = WordsCollection.find(new Document("_id", newId)).first();
+                if (existingDoc == null) {
+                    Document doc = new Document();
+                    doc.append("word",Word).append("DocsCount",docsCount).append("IDF",idf).append("ArrayOfdocs",ArrayOfdocs);
+                    WordsCollection.insertOne(doc);
+                    Inserted = true;
+                }
             }
+        }
+        else
+        {
+            WordsCollection.updateOne(
+                    new Document("word", Word),
+                    new Document("$set", new Document("DocsCount", docsCount))
+            );
+            ArrayList<ObjectId> existingArray = (ArrayList<ObjectId>) DocExist.get("ArrayOfdocs");
+            if(ArrayOfdocs!=null) {
+                existingArray.addAll(ArrayOfdocs);
+            }
+            WordsCollection.updateOne(
+                    new Document("word", Word),
+                    new Document("$set", new Document("ArrayOfdocs", existingArray))
+            );
+            WordsCollection.updateOne(
+                    new Document("word", Word),
+                    new Document("$set", new Document("IDF", idf))
+            );
+        }
+    }
+
+
+    public double getInitNumberOfPages()
+    {
+        return (double) DocCollection.countDocuments();
+    }
+
+    public HashMap<String,Integer> getallPreviousWords() {
+        // Initialize a HashMap to store words and their document counts
+        HashMap<String, Integer> wordDocsCountTemp = new HashMap<>();
+        // Retrieve all documents from the collection
+        FindIterable<Document> documents = WordsCollection.find();
+        int NumberOfPages=0;
+        // Iterate over the documents and extract word and count
+        try (MongoCursor<Document> cursor = documents.iterator()) {
+            while (cursor.hasNext()) {
+                Document document = cursor.next();
+
+                // Retrieve 'Word' and 'count' from the document and add to the HashMap
+                String word = document.getString("word");
+                Integer count = document.getInteger("DocsCount");
+
+                if (word != null && count != null) {
+                    wordDocsCountTemp.put(word, count);
+                }
+            }
+        }
+        return wordDocsCountTemp;
+    }
+    public boolean DoesUrlExist(String url)
+    {
+        try {
+            Document document = DocCollection.find(new Document("url", url)).first();
+            return document!=null;
+        } catch (MongoException e) {
+            System.err.println("Error retrieving document: " + e.getMessage());
+            return true;
         }
     }
 }

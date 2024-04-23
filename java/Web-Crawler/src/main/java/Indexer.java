@@ -20,11 +20,14 @@ public class Indexer {
     public static Set<String> stopwords = new HashSet<>();
     public static ArrayList<HashMap<String, Integer>> pos_wrd_Cnt;  // word appeard in position x n time in one doc
 
-    public static HashMap<String,Integer> WordDocsCount= new HashMap<String,Integer>();;   // words apeared in n docs
+    public static HashMap<String,Integer> WordDocsCount;  // words apeared in n docs
 
     public static HashMap<String, ArrayList<ObjectId>> DocsOfWord = new HashMap<String, ArrayList<ObjectId>>();// words apeared in n docs
 
     private static final int POSITIONS_SIZE = 7;
+
+    private static double NumberOfPagesCounter;
+
     ///////  DataBase  /////
 
 
@@ -35,25 +38,30 @@ public class Indexer {
 
     public static void main(String[] args) throws IOException {
         try {
-            reader = new BufferedReader(new FileReader("src/main/java/output"));
+            reader = new BufferedReader(new FileReader("D:\\Pharoah_eye_project\\Pharoah-s-Eye-Engine\\java\\Web-Crawler\\src\\main\\java\\output"));
         } catch (IOException e) {
             System.err.println("Error initializing BufferedReader: " + e.getMessage());
         }
         //readstopwords in hashset
-        fillSetFromFile("src/main/java/Stopwords.txt");
+        fillSetFromFile("D:\\Pharoah_eye_project\\Pharoah-s-Eye-Engine\\java\\Web-Crawler\\src\\main\\java\\Stopwords.txt");
         DBhandler=new Database();
         DBhandler.initDataBase();
+        WordDocsCount= DBhandler.getallPreviousWords();    // initialize hashmap depending on database
+        NumberOfPagesCounter=DBhandler.getInitNumberOfPages();  // return old Page numbers in variable
         String url = readNextLine();
         Document document;
-        while (url != null) {
-            lengthOfDocument=0;
-            document = Jsoup.connect(url).get();
-            handler(document);
-            ObjectId docid=DBhandler.insertDocument(url,Optional.of(popularity));
-            PassWordsToDB(docid);
-            pos_wrd_Cnt.clear();
+        while (url != null ) {
+            if( !DBhandler.DoesUrlExist(url)) {
+                NumberOfPagesCounter++;
+                lengthOfDocument = 0;
+                document = Jsoup.connect(url).get();
+                handler(document);
+                ObjectId docid = DBhandler.insertDocument(url, Optional.of(popularity));
+                PassWordsToDB(docid);
+                pos_wrd_Cnt.clear();
+                System.out.println("finished a doc");
+            }
             url = readNextLine();
-            System.out.println("finished a doc");
         }
         insertAllWords();
         closeReader();
@@ -225,7 +233,7 @@ public class Indexer {
         {
             Word=WordDocsCount.entrySet().iterator().next().getKey();
             NumberOfDocs=WordDocsCount.entrySet().iterator().next().getValue();
-            IDF=Math.log((Crawler.getMaxQueueSize() / (double)NumberOfDocs));
+            IDF=Math.log((NumberOfPagesCounter/ (double)NumberOfDocs));  //edited since its not dependent on crawler
             arr=DocsOfWord.get(Word);
             WordDocsCount.remove(Word);
             DBhandler.Wordinsertion(Word,NumberOfDocs,IDF,arr);
