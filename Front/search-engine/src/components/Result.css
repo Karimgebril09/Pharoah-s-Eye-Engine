@@ -1,34 +1,84 @@
-/* Add your fancy styling for the result here */
+/* Result.css */
 .result {
-    background-color: #f8f8f8;
-    border: 1px solid #ddd;
-    padding: 10px;
-    margin: 10px;
-    border-radius: 8px;
+  margin: 20px;
 }
 
-.url {
-    font-weight: bold;
-    color: #0066cc;
+.search-form {
+  display: flex;
+  align-items: center;
 }
 
-.description {
-    margin-top: 8px;
-}
 .form-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 10vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 10vh;
 }
 
+.search-input {
+  flex: 1;
+  padding: 10px;
+  border: 2px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-right: 10px;
+}
 
-/* CSS */
+.submit-button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.submit-button:hover {
+  background-color: #0056b3;
+}
+.suggestions-container {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 5px 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+}
+
+/* Result.css */
+.suggestion {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin-bottom: 5px;
+  background-color: #f9f9f9;
+  cursor: pointer;
+}
+
+.suggestion:hover {
+  background-color: #e0e0e0;
+}
+.suggestion:last-child {
+  border-bottom: none;
+}
+
+.suggestion p {
+  margin: 0;
+  font-size: 16px;
+}
+
 .submit-button {
   padding: 0.6em 2em;
   border: none;
   outline: none;
-  color: rgb(255, 255, 255);
+  color: #fff;
   background: #111;
   cursor: pointer;
   position: relative;
@@ -41,18 +91,7 @@
 
 .submit-button:before {
   content: "";
-  background: linear-gradient(
-    45deg,
-    #ff0000,
-    #ff7300,
-    #fffb00,
-    #48ff00,
-    #00ffd5,
-    #002bff,
-    #7a00ff,
-    #ff00c8,
-    #ff0000
-  );
+  background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
   position: absolute;
   top: -2px;
   left: -2px;
@@ -69,41 +108,13 @@
 
 @keyframes glowing-button-85 {
   0% {
-    background-position: 0 0;
+      background-position: 0 0;
   }
   50% {
-    background-position: 400% 0;
+      background-position: 400% 0;
   }
   100% {
-    background-position: 0 0;
+      background-position: 0 0;
   }
 }
 
-.search-input {
-    padding: 10px;
-    border: 2px solid #ccc;
-    border-radius: 5px;
-    font-size: 16px;
-    width: 300px;
-    margin-right: 10px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/*.submit-button {
-    padding: 10px 20px;
-    background-color: #007bff;
-    border: none;
-    border-radius: 5px;
-    color: white;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}*/
-
-.submit-button:hover {
-    background-color: #0056b3;
-}
-
-.submit-button:hover {
-    background-color: #0056b3;
-}

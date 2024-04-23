@@ -1,5 +1,7 @@
 /*import java.io.BufferedReader;
 import java.io.FileReader;*/
+
+
 import java.io.IOException;
 import java.util.*;
 import java.io.File;
@@ -18,6 +20,7 @@ import org.bson.types.ObjectId;
 import com.mongodb.client.model.Sorts;
 public class Ranker {
     public static Set<String> stopWords = new HashSet<>();
+   // public static Set<String> stopWords = new HashSet<>();
     public static MongoDatabase db;
     public static MongoDatabase db2;
     public static MongoCollection<org.bson.Document> DocCollection;
