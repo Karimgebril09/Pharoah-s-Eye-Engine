@@ -1,6 +1,6 @@
-// Result.js
 import React, { useState, useRef } from 'react';
 import axios from 'axios';
+import { useHistory } from 'react-router-dom'; // Import useHistory from react-router-dom
 import Autosuggest from 'react-autosuggest';
 import './Result.css'; // Import your CSS file for styling
 
@@ -8,6 +8,7 @@ const Result = () => {
     const [query, setQuery] = useState('');
     const [suggestions, setSuggestions] = useState([]);
     const timeoutRef = useRef(null);
+    const history = useHistory(); // Get the history object from React Router
 
     const onChange = (event, { newValue }) => {
         clearTimeout(timeoutRef.current); // Clear previous timeout
@@ -42,8 +43,10 @@ const Result = () => {
     const getSuggestionValue = suggestion => suggestion;
 
     const renderSuggestion = suggestion => (
-        <div className="suggestion" onClick={() => handleSuggestionClick(suggestion)}>
+        <div className='container'>
+        <div className="box" onClick={() => handleSuggestionClick(suggestion)}>
             {suggestion}
+        </div>
         </div>
     );
 
@@ -76,6 +79,8 @@ const Result = () => {
             // Send the query to your Java backend here
             await axios.post('http://localhost:8080/search', { query });
             alert("sent successfully");
+            // Navigate to the results page after submitting the query
+            history.push('/results'); // Navigate to the '/results' route
         } catch (error) {
             console.error('Error performing search:', error);
         }
@@ -83,21 +88,25 @@ const Result = () => {
 
     return (
         <div className="result">
-            <div className="form-container">
-                <form onSubmit={handleSubmit}>
-                    <Autosuggest
-                        suggestions={suggestions}
-                        onSuggestionsFetchRequested={() => {}}
-                        onSuggestionsClearRequested={onSuggestionsClearRequested}
-                        getSuggestionValue={getSuggestionValue}
-                        renderSuggestion={renderSuggestion}
-                        inputProps={inputProps}
-                    />
-                    <button type="submit" className="submit-button">Search</button>
-                </form>
+        <div className="input-container">
+          <form onSubmit={handleSubmit} className="form">
+            <div className="input-wrapper">
+              <Autosuggest
+                suggestions={suggestions}
+                onSuggestionsFetchRequested={() => {}}
+                onSuggestionsClearRequested={onSuggestionsClearRequested}
+                getSuggestionValue={getSuggestionValue}
+                renderSuggestion={renderSuggestion}
+                inputProps={inputProps}
+              />
+              <button type="submit" className="submit-button">Search</button>
             </div>
+          </form>
+                     
+          
         </div>
-    );
+        </div>
+       )
 };
 
 export default Result;

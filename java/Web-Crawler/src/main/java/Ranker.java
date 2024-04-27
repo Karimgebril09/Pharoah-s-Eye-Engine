@@ -17,6 +17,8 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 import org.bson.types.ObjectId;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import com.mongodb.client.model.Sorts;
 public class Ranker {
     public static Set<String> stopWords = new HashSet<>();
@@ -33,8 +35,11 @@ public class Ranker {
     public static HashMap<ObjectId, Double> scoreshashmap = new HashMap<>();
     public static ArrayList<HashMap<String, Object>> finalResult = new ArrayList<>();
     public static ArrayList<Double> weights = new ArrayList<>(Arrays.asList(2.0, 1.0, 0.8, 0.6, 0.4, 0.2, 0.1,0.05));
+    public static ArrayList<String> afterProcessing=new ArrayList<>();
+    public static String query;
+
     public static void main(String[] args) throws IOException {
-        String query ; ///to be modifed get from react
+       // String query ; ///to be modifed get from react
         //ArrayList<String> afterProcessing = QueryProcessing(Query);
         String path="src/main/java/Stopwords.txt";//Step1 extracting StopWords
         try {
@@ -51,7 +56,7 @@ public class Ranker {
             Document queryDocument = getLastInsertedQuery(client);
             query=extractQuery(queryDocument);
             System.out.println(query);
-            ArrayList<String> afterProcessing = queryProcessing(query);
+            afterProcessing = queryProcessing(query);
             System.out.println(afterProcessing);
             //HashSet<String> uniqueTerms = new HashSet<>(afterProcessing);
             //System.out.println(uniqueTerms);
@@ -131,6 +136,8 @@ public class Ranker {
                 System.out.println(entry);
             }
             HashMap<String,Object>docData;
+            client = createConnection();
+            dropCollection(client);
             for (ObjectId temp:resultsIds) {
                 client = createConnection();
 
@@ -143,8 +150,11 @@ public class Ranker {
                         //HashMap<String, Object> DocData = docData(document);
                         //System.out.println(DocData.get("url"));
                         docData = docData(document);
-                        System.out.println(docData);
+                       // System.out.println(docData);
                         finalResult.add(docData);
+                        client = createConnection();
+                        insertresult(docData,client);
+                        System.out.println("passeslllllllll");
 
                     } else {
                         System.out.println("this doc is not in the indexer");
@@ -177,6 +187,113 @@ public class Ranker {
         }
         return additional;
     }
+    public static void insertresult(HashMap<String, Object> docData, MongoClient client) {
+        try {
+            // Ensure connection is closed after use
+            try (client) {
+                db2 = client.getDatabase("Salma");
+                MongoCollection<Document> collection = db2.getCollection("result");
+
+                // Drop the collection to remove older results
+               // collection.drop();
+
+                // Create the collection again after dropping
+                //collection = db2.getCollection("result");
+
+                // Extract the first three lines of the body as the paragraph preview
+                String paragraphPreview = findParagraph(joinLines((String) docData.get("body")));
+
+                // Create document to insert
+                Document paragraphDoc = new Document();
+                paragraphDoc.append("title", (String) docData.get("title"));
+                paragraphDoc.append("url", (String) docData.get("url"));
+                paragraphDoc.append("paragraph", paragraphPreview);
+
+                collection.insertOne(paragraphDoc);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } catch (MongoException e) {
+            System.err.println("Error inserting result: " + e.getMessage());
+        }
+    }
+    public static void dropCollection( MongoClient client) {
+        try {
+            // Ensure connection is closed after use
+            try (client) {
+                MongoDatabase database = client.getDatabase("Salma");
+                database.getCollection("result").drop();
+                System.out.println("Collection " + "result" + " dropped successfully.");
+            } catch (Exception e) {
+                System.err.println("Error dropping collection: " + e.getMessage());
+            }
+        } catch (Exception e) {
+            System.err.println("Error connecting to MongoDB: " + e.getMessage());
+        }
+    }
+
+
+    public static String findParagraph(String text) throws IOException {
+        StringBuilder result = new StringBuilder();
+        Set<String> querySet = new HashSet<>(afterProcessing);
+        int wordCount = 0;
+        boolean found = false;
+
+        // Split the text into paragraphs based on empty lines
+        String[] paragraphs = text.split("\\n\\s*\\n");
+
+        // Iterate over each paragraph
+        for (String paragraph : paragraphs) {
+            // Split the paragraph into lines
+
+            ArrayList<String> lines = queryProcessing(paragraph);
+
+            // Iterate over each line in the paragraph
+            for (String line : lines) {
+                // Split the line into words
+                String[] words = line.split("\\s+");
+
+                // Check each word in the line
+                for (String word : words) {
+                    // Append the word to the result
+                    result.append(word).append(" ");
+                    wordCount++;
+
+                    // If the word count exceeds 100, stop processing
+                    if (wordCount >= 100) {
+                        return result.toString().trim();
+                    }
+
+                    // If the current word is in the set of queries, mark the paragraph as found
+                    if (querySet.contains(word.toLowerCase())) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                // If the paragraph contains one of the queries, append it to the result
+                if (found) {
+                    for (String l : lines) {
+                        result.append(l).append("\n");
+                    }
+                    return result.toString().trim();
+                }
+            }
+        }
+
+        // If none of the queries is found, return the first 100 words
+        return result.toString().trim();
+    }
+    public static String joinLines(String block) {
+        // Split the block into lines based on full stops
+        String[] lines = block.split("\\.");
+        StringBuilder result = new StringBuilder();
+        for (String line : lines) {
+            result.append(line.trim()).append("\n"); // Trim leading and trailing whitespace
+        }
+        return result.toString();
+    }
+
     public static Document getWordDoc(MongoClient client, ObjectId id) {
         try (client) {  // Ensure connection is closed after use
             db = client.getDatabase("test");
@@ -291,10 +408,10 @@ public class Ranker {
             }
         }
 
-        System.out.println("Tokens of the query:");
+       /* System.out.println("Tokens of the query:");
         for (String token : datbseQuery) {
             System.out.println(token);
-        }
+        }*/
 
         return datbseQuery;
     }
@@ -369,8 +486,11 @@ public class Ranker {
         HashMap<String, Object> details = new HashMap<>();
         details.put("_id", document.getObjectId("_id"));
         details.put("url", document.getString("url"));
+        details.put("body", document.getString("body"));
         Integer pop = document.getInteger("popularity");
         details.put("popularly", pop);
+        details.put("p", document.getString("p"));
+        details.put("title", document.getString("title"));
         return details;
     }
     private static HashMap<String, Object> wordData(Document document) {
@@ -409,6 +529,4 @@ public class Ranker {
        String query = document.getString("Query");
         return query;
     }
-
-
 }

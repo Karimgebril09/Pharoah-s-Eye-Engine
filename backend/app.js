@@ -2,18 +2,16 @@ import express from 'express';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import cors from 'cors';
-//import { Words } from './models/word.js';
-//import { Word_Documentt } from './models/word_doc.js';
-//import { document } from './models/document.js';
 import { Query } from './models/query.js';
-
-//dotenv.config();
+import { Results } from './models/results.js';
+import { exec } from 'child_process';
+const javaFilePath = 'D:/Web Sessions/SearchEngine/java/Web-Crawler/src/main/java/';
+dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-//const PORT = process.env.PORT || 8080;
-
+// Connect to MongoDB
 console.log('Before connecting to the database...');
 mongoose.connect(`mongodb://127.0.0.1:27017/Salma`)
     .then(() => {
@@ -22,46 +20,14 @@ mongoose.connect(`mongodb://127.0.0.1:27017/Salma`)
     })
     .catch(err => console.error('Database connection error:', err));
 
-
 app.use(express.urlencoded({ extended: true }));
 
+// Define routes
 app.get('/', (req, res) => {
     res.send('Hello World!');
 });
 
-/*app.get('/wordsdoc', (req, res) => {
-    // Find all documents in the Word_Document collection
-    Word_DocumentModel.find({})
-        .then(documents => {
-            // Send the retrieved documents as a JSON response
-            res.json(documents);
-        })
-        .catch(error => {
-            // Handle error
-            console.error('Error finding documents:', error);
-            res.status(500).json({ error: 'Internal server error' });
-        });
-});*/
-
-/*
-app.post('/documents', async (req, res) => {
-    try {
-        const { url, popularity, words } = req.body; // Extract data from request body
-
-        // Create a new document instance
-        const newDocument = new document({ url, popularity, words });
-
-        // Save the new document to the database
-        const savedDocument = await newDocument.save();
-
-        // Send a success response
-        res.status(201).json(savedDocument);
-    } catch (error) {
-        // Handle errors
-        console.error('Error creating document:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});*/
+// Handle POST requests for search queries
 app.post('/search', async (req, res) => {
     try {
         console.log(req.body.query);
@@ -81,10 +47,19 @@ app.post('/search', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-app.listen(8080, err => {
-    if (err) {
-        console.error(err);
-        return;
+
+app.get('/search', async (req, res) => {
+    try {
+        const searchResults = await Results.find({});
+        res.status(200).json(searchResults);
+    } catch (error) {
+        console.error('Error fetching search results:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
-    console.log(`Server started listening at port ${8080}`);
+});
+
+// Start the server
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+    console.log(`Server started listening at port ${PORT}`);
 });

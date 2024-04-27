@@ -13,6 +13,8 @@ import com.mongodb.client.model.Indexes;
 import org.bson.types.ObjectId;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 public class Indexer {
     //data structures
@@ -38,12 +40,12 @@ public class Indexer {
 
     public static void main(String[] args) throws IOException {
         try {
-            reader = new BufferedReader(new FileReader("D:\\Pharoah_eye_project\\Pharoah-s-Eye-Engine\\java\\Web-Crawler\\src\\main\\java\\output"));
+            reader = new BufferedReader(new FileReader("src/main/java/output"));
         } catch (IOException e) {
             System.err.println("Error initializing BufferedReader: " + e.getMessage());
         }
         //readstopwords in hashset
-        fillSetFromFile("D:\\Pharoah_eye_project\\Pharoah-s-Eye-Engine\\java\\Web-Crawler\\src\\main\\java\\Stopwords.txt");
+        fillSetFromFile("src/main/java/Stopwords.txt");
         DBhandler=new Database();
         DBhandler.initDataBase();
         WordDocsCount= DBhandler.getallPreviousWords();    // initialize hashmap depending on database
@@ -56,7 +58,15 @@ public class Indexer {
                 lengthOfDocument = 0;
                 document = Jsoup.connect(url).get();
                 handler(document);
-                ObjectId docid = DBhandler.insertDocument(url, Optional.of(popularity),document.body().text(),document.select("title").text(),document.select("p").text());
+                Elements paragraphs = document.select("p");
+
+                // Extract text from paragraphs
+                StringBuilder allParagraphsText = new StringBuilder();
+                for (Element paragraph : paragraphs) {
+                    allParagraphsText.append(paragraph.text()).append("\n");
+                }
+
+                ObjectId docid = DBhandler.insertDocument(url, Optional.of(popularity),document.body().text(),document.select("title").text(),allParagraphsText.toString());
                 PassWordsToDB(docid);
                 pos_wrd_Cnt.clear();
                 System.out.println("finished a doc");
