@@ -80,7 +80,7 @@ const Result = () => {
             await axios.post('http://localhost:8080/search', { query });
             alert("sent successfully");
             // Navigate to the results page after submitting the query
-            history.push('/results'); // Navigate to the '/results' route
+            history.push('/Loading'); // Navigate to the '/results' route
         } catch (error) {
             console.error('Error performing search:', error);
         }

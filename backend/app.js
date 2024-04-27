@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import { Query } from './models/query.js';
 import { Results } from './models/results.js';
-import { exec } from 'child_process';
+import child_process from 'child_process';
 const javaFilePath = 'D:/Web Sessions/SearchEngine/java/Web-Crawler/src/main/java/';
 dotenv.config();
 const app = express();
@@ -49,6 +49,35 @@ app.post('/search', async (req, res) => {
 });
 
 app.get('/search', async (req, res) => {
+    try {
+      const javaProcess = child_process.spawn('java', [
+        '-jar',
+        'D:/Pharoah_eye_project/Pharoah-s-Eye-Engine/backend/Pharoah_eye_project.jar'
+      ]);
+  
+      javaProcess.stdout.on('data', (data) => {
+        console.log(`Java stdout: ${data}`);
+      });
+  
+      javaProcess.stderr.on('data', (data) => {
+        console.error(`Java stderr: ${data}`);
+      });
+  
+      javaProcess.on('error', (err) => {
+        console.error('Error executing Java file:', err);
+        return res.status(500).json({ error: 'Internal server error' });
+      });
+  
+      javaProcess.on('close', (code) => {
+        console.log(`Java process exited with code: ${code}`);
+        // Handle successful execution (if needed)
+      });
+    } catch (error) {
+      console.error('Error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+app.get('/searchh', async (req, res) => {
     try {
         const searchResults = await Results.find({});
         res.status(200).json(searchResults);

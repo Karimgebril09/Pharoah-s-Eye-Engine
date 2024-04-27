@@ -10,20 +10,22 @@ const Results = () => {
   const containerHeight = 500; // Height of the container div in pixels
 
   // useEffect hook to fetch data when the component mounts
-  useEffect(() => {
+useEffect(() => {
     fetchData();
-  }, []);
+}, []);
 
-  // Function to fetch data using Axios
-  const fetchData = async () => {
+// Function to fetch data using Axios
+const fetchData = async () => {
     try {
-      const response = await axios.get("http://localhost:8080/search");
-      console.log(response.data);
-      setResultData(response.data);
+        const response = await axios.get("http://localhost:8080/searchh");
+        console.log(response.data);
+        setResultData(response.data);
     } catch (error) {
-      console.error("Error fetching data:", error);
+        console.error("Error fetching data:", error);
     }
-  };
+};
+
+
 
   /// Calculate the total number of pages based on the total number of links and links per page
 const totalLinks = resultData.length;

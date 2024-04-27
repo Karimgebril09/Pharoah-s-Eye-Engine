@@ -5,6 +5,7 @@ import './App.css';
 import Result from './components/Result'; // Import the Result component
 import Results from './components/Results';
 import resultData from "./components/Urls.json"
+import LoadingPage from './components/LoadingPage';
 
 function App() {
 
@@ -17,7 +18,8 @@ function App() {
         <div className="content">
           <Switch>
             <Route exact path="/"><Result /></Route>
-            <Route exact path="/results"> <Results resultData={resultData} /> </Route>                        
+            <Route exact path="/results"> <Results resultData={resultData} /> </Route>    
+            <Route exact path="/Loading"> <LoadingPage/> </Route>                       
           </Switch>
         </div>
         
