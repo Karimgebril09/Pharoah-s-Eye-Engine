@@ -2,14 +2,10 @@ import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import java.io.*;
 import java.io.IOException;
-import com.mongodb.ConnectionString;
-import com.mongodb.MongoException;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -18,16 +14,14 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 
-public class Crawler {
+public class crawler2 {
     private static HashMap<String,Integer> visitedurls = new HashMap<>();
     private static HashMap<String,Integer> visitedurlsbody = new HashMap<>();
     private static BufferedWriter writer;
-    private static final int THREAD_NUM=1000;
+    private static final int THREAD_NUM=15;
     private static final int MAX_DEPTH = 5;//levels max
-    private static final int MAX_QUEUE_SIZE = 7000;//max crawler size
-    public static MongoDatabase db;
-    public static MongoCollection<org.bson.Document> DocRankCollection;
-   /* private static final String[] Seeds = {
+    private static final int MAX_QUEUE_SIZE = 1000;//max crawler size
+    private static final String[] Seeds = {
             "https://en.wikipedia.org/wiki/Main_Page",
             "https://www.britannica.com/",
             "https://www.nasa.gov/",
@@ -41,13 +35,11 @@ public class Crawler {
             "https://www.espn.com/",
             "https://www.theguardian.com/uk/sport"
             // Add more seeds as needed
-    };*/
-
-
+    };
 
     public static void main(String[] args) {
-        List<String> Seeds = readSeedsFromFile("src/main/java/Seed.txt");
-        Queue<String> UrlsQueue = new LinkedList<>(Seeds);
+        // Initialize the queue with seed URLs
+        Queue<String> UrlsQueue = new LinkedList<>(Arrays.asList(Seeds));
         Set<String> visitedUrls = new HashSet<>();
         try {
             writer = new BufferedWriter(new FileWriter("src/main/java/output"));
@@ -106,10 +98,9 @@ public class Crawler {
 
             Document doc = request(currentUrl, visitedUrls);
             if (doc != null) {
-                List<String> outgoingLinks = new ArrayList<>();
+
                 for (Element link : doc.select("a[href]")) {
                     String nextLink = link.absUrl("href");
-                    outgoingLinks.add(nextLink);
                     if (!visitedUrls.contains(nextLink) && currentDepth < MAX_DEPTH) {
                         synchronized (UrlsQueue) {
                             UrlsQueue.offer(nextLink); // Add the new URL to the end of the queue
@@ -117,36 +108,7 @@ public class Crawler {
                         crawl(UrlsQueue, visitedUrls, currentDepth + 1); // Recursive call with increased depth
                     }
                 }
-                MongoClient client=createConnection();
-                insertOutgoingLinksIntoDatabase(client,currentUrl, outgoingLinks);
             }
-        }
-    }
-    public static void insertOutgoingLinksIntoDatabase(MongoClient client,String currentUrl,  List<String> outgoingLinks){
-        try {
-            // Ensure connection is closed after use
-            try (client) {
-                db = client.getDatabase("Salma");
-                MongoCollection<org.bson.Document> collection = db.getCollection("Ranker");
-                // Create document to insert
-                org.bson.Document paragraphDoc = new org.bson.Document();
-                paragraphDoc.append("url", currentUrl);
-                paragraphDoc.append("outgoings",outgoingLinks);
-                collection.insertOne(paragraphDoc);
-            }
-        } catch (MongoException e) {
-            System.err.println("Error inserting result: " + e.getMessage());
-        }
-
-    }
-    public static MongoClient createConnection() {
-        ConnectionString connectionString = new ConnectionString("mongodb://localhost:27017");
-        try {
-            MongoClient client = MongoClients.create(connectionString);
-            return client;
-        } catch (MongoException e) {
-            System.err.println("Error creating connection: " + e.getMessage());
-            return null;
         }
     }
 
@@ -229,18 +191,7 @@ public class Crawler {
         }
         return !result;
     }
-    private static List<String> readSeedsFromFile(String filePath) {
-        List<String> seeds = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                seeds.add(line.trim());
-            }
-        } catch (IOException e) {
-            System.err.println("Error reading seeds file: " + e.getMessage());
-        }
-        return seeds;
-    }
+
     private static String getSHA(Document doc) {
         String htmlContent = doc.html();
         try {
@@ -296,4 +247,4 @@ public class Crawler {
     public static int getMaxQueueSize() {
         return MAX_QUEUE_SIZE;
     }
-    }
+}

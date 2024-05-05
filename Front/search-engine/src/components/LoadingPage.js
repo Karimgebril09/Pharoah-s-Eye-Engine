@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useHistory } from 'react-router-dom';
+import videoSource from './vid3.mp4'; // Importing the video file
 
 const LoadingPage = () => {
   const [loading, setLoading] = useState(true);
@@ -18,24 +19,34 @@ const LoadingPage = () => {
   useEffect(() => {
     const fetchData2AndNavigate = async () => {
       try {
-        fetchData2(); // Call fetchData2
-        setLoading(false); // Set loading to false after fetchData2 completes
-
-        // Set a timeout of 3 seconds before navigating to another page
-        setTimeout(() => {
-          history.push('/results'); // Navigate to another page
-        }, 4000); // 3 seconds timeout
+        await fetchData2(); // Call fetchData2
+        // Set loading to false after fetchData2 completes
+        setLoading(false); 
       } catch (error) {
         console.error("Error:", error);
       }
     };
 
     fetchData2AndNavigate(); // Call the fetchData2AndNavigate function
+  }, []); // No dependencies, so this effect runs only once when component mounts
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      history.push('/results'); // Navigate to another page after 7000 milliseconds
+    }, 10000);
+
+    // Clean up the timeout when component unmounts or when the timeout changes
+    return () => clearTimeout(timeoutId);
   }, [history]); // Include history in the dependency array to avoid eslint warning
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-      {loading ? <p>Loading...</p> : <p>Content Loaded!</p>}
+      {loading ? (
+        <video width="720" height="540" controls autoPlay  playsInline>
+          <source src={videoSource} type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+      ) : null}
     </div>
   );
 };

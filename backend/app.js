@@ -52,12 +52,12 @@ app.get('/search', async (req, res) => {
     try {
       const javaProcess = child_process.spawn('java', [
         '-jar',
-        'D:/Pharoah_eye_project/Pharoah-s-Eye-Engine/backend/Pharoah_eye_project.jar'
+        './SearchEngine.jar'
       ]);
   
-      javaProcess.stdout.on('data', (data) => {
-        console.log(`Java stdout: ${data}`);
-      });
+     // javaProcess.stdout.on('data', (data) => {
+       // console.log(`Java stdout: ${data}`);
+      //});
   
       javaProcess.stderr.on('data', (data) => {
         console.error(`Java stderr: ${data}`);
