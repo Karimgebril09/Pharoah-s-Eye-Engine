@@ -62,18 +62,24 @@ const linksForCurrentPage = resultData.slice(startIndex, endIndex);
 
       {/* Generate page number buttons */}
 {/* Generate page navigation buttons */}
+<div className='Arrows'>
 <button
   onClick={() => handleClickPage(currentPage - 1)}
   disabled={currentPage === 1} // Disable the button if on the first page
 >
-  <FaArrowLeft />
+<div style={{ textAlign: 'center' }}>
+      <FaArrowLeft style={{ fontSize: '20px', color: 'black' }} />
+    </div>
 </button>
 <button
   onClick={() => handleClickPage(currentPage + 1)}
   disabled={currentPage === totalPages} // Disable the button if on the last page
 >
-  <FaArrowRight />
+<div style={{ textAlign: 'center' }}>
+      <FaArrowRight style={{ fontSize: '20px', color: 'black' }} />
+    </div>
 </button>
+</div>
     </div>
   );
 };

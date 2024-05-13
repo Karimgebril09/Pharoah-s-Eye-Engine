@@ -51,12 +51,18 @@ public class Indexer {
         WordDocsCount= DBhandler.getallPreviousWords();    // initialize hashmap depending on database
         NumberOfPagesCounter=DBhandler.getInitNumberOfPages();  // return old Page numbers in variable
         String url = readNextLine();
-        Document document;
+        Document document =null;
         while (url != null ) {
             if( !DBhandler.DoesUrlExist(url)) {
                 NumberOfPagesCounter++;
                 lengthOfDocument = 0;
-                document = Jsoup.connect(url).get();
+                try {
+                    document = Jsoup.connect(url).get();
+                }catch(Exception e) {
+                    url = readNextLine();
+                    pos_wrd_Cnt.clear();
+                    continue;
+                }
                 handler(document);
                 Elements paragraphs = document.select("p");
 

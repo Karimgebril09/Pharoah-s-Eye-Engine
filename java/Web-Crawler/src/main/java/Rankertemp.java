@@ -17,9 +17,9 @@ import org.bson.types.ObjectId;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import com.mongodb.client.model.Sorts;
-public class Ranker {
+public class Rankertemp {
     public static Set<String> stopWords = new HashSet<>();
-    private static final int THREAD_NUM=15;
+    private static final int THREAD_NUM=100;
     public static MongoDatabase db;
     public static MongoDatabase db2;
     public static MongoCollection<org.bson.Document> DocCollection;
@@ -35,21 +35,27 @@ public class Ranker {
     public static List<String> temp = new ArrayList<>();
     public static  List<String> tempWithoutQuotes = new ArrayList<>();
     public static Boolean needFiller;
-    public static MongoClient client;
-    public static  ArrayList<ObjectId> arrayOfDocs;
     public static void main(String[] args) throws IOException {
         // Capture the current time after running the code
         long startTime = System.currentTimeMillis();
+
+        // Calculate the time taken by subtracting start time from end time
 
         String path="src/main/java/Stopwords.txt";//Step1 extracting StopWords
         try {
             getStopwords(path);
             //////////////////////////////////////////////tested before calling the database
-            client = createConnection();
+            MongoClient client = createConnection();
             if (client == null) {
                 System.err.println("Failed to create connection");
                 return;
             }
+
+          /*  Thread[] crawlerThreads=new Thread[THREAD_NUM];
+            for(int i=0;i<THREAD_NUM;i++){
+                crawlerThreads[i]=new Thread(new Crawler.RunnableCrawler(UrlsQueue,visitedUrls));
+                crawlerThreads[i].start();
+            }*/
             List<Integer> posy = Arrays.asList(1, 1, 0, 0, 0, 0, 0, 0);
             System.out.println(weightOfPos(posy));
             Document queryDocument = getLastInsertedQuery(client);
@@ -78,7 +84,7 @@ public class Ranker {
                         System.out.println("this word is not in the indexer");
                     }}
             }
-           /* double score=0.0;
+            double score=0.0;
             HashMap<String, Object> temphash2;
             for (HashMap<String, Object> wordDataMap : wordColofQuery) {
                 List<ObjectId> arrayOfDocs = (List<ObjectId>) wordDataMap.get("ArrayOfdocs");
@@ -103,24 +109,14 @@ public class Ranker {
                     }
                 } else {
                     //   System.err.println("ArrayOfdocs is null in wordDataMap: " + wordDataMap);
-                }*/
-            // System.out.println("passed");
-            Thread[] rankerThreads=new Thread[THREAD_NUM];
-            for(int i=0;i<THREAD_NUM;i++){
-                rankerThreads[i]=new Thread(new Ranker.RunnableRanker(arrayOfDocs));
-                rankerThreads[i].start();
-            }
-            for(int i=0;i<THREAD_NUM;i++){
-                try {
-                    rankerThreads[i].join();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
                 }
+                // System.out.println("passed");
             }
-            long sorts=System.currentTimeMillis();
             Sorter(scoreshashmap);
-            long sorte=System.currentTimeMillis();
-            long secstart=System.currentTimeMillis();
+            //  System.out.println("passed");
+            for (ObjectId entry : resultsIds) {
+                // System.out.println(entry);
+            }
             HashMap<String,Object>docData;
             client = createConnection();
             dropCollection(client);
@@ -137,35 +133,31 @@ public class Ranker {
                     System.out.println("this doc is not in the indexer");
                 }}
             // Capture the current time after running the code
-            long secend=System.currentTimeMillis();
             long endTime = System.currentTimeMillis();
 
             // Calculate the time taken by subtracting start time from end time
             long executionTime = endTime - startTime;
-            long sortt=sorte-sorts;
-            long pro=secend-secstart;
 
             // Print the execution time
             System.out.println("Time taken: " + executionTime + " milliseconds");
-            System.out.println("sort taken: " + sortt + " milliseconds");
-            System.out.println("pro taken: " + pro + " milliseconds");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
-    private static class RunnableRanker implements Runnable{
-        ArrayList<ObjectId>listid;
+    private static class RunnableCrawler implements Runnable{
+        HashMap<String, Object> docData;
         MongoClient client;
 
 
 
-        public RunnableRanker(ArrayList<ObjectId>listids){
-            this.listid=listids;
+        public RunnableCrawler(HashMap<String, Object> docData, MongoClient client ){
+            this.docData=docData;
+            this.client = client;
 
         }
 
         public void run(){
-            Calculate();
+            insertresult(docData,client);
         }
     }
     public static MongoClient createConnection() {
@@ -176,38 +168,6 @@ public class Ranker {
         } catch (MongoException e) {
             System.err.println("Error creating connection: " + e.getMessage());
             return null;
-        }
-    }
-    public static void Calculate() {
-        double score = 0.0;
-        HashMap<String, Object> temphash2;
-        for (HashMap<String, Object> wordDataMap : wordColofQuery) {
-            arrayOfDocs = (ArrayList<ObjectId>) wordDataMap.get("ArrayOfdocs");
-            if (arrayOfDocs != null) {
-                ObjectId temp;
-                while (!arrayOfDocs.isEmpty()) {
-                    synchronized (arrayOfDocs) {
-                        temp = arrayOfDocs.removeFirst();
-                    }
-                    client = createConnection();
-                    Document doc = getWordDoc(client, temp);
-                    if (doc != null) {
-                        temphash2 = DocWordData(doc);
-                        ObjectId docId = (ObjectId) temphash2.get("Docid");
-                        client = createConnection();
-                        Document doc2 = getDoc(client, docId);
-                        if (doc2 != null) {
-                            HashMap<String, Object> temphash3 = docData(doc2);
-                            score = (Double) wordDataMap.get("IDF") * (Double) temphash2.get("tf") + (Double) temphash3.get("popularity");
-                            List<Integer> pos = (List<Integer>) temphash2.get("Positions");
-                            double currentScore = scoreshashmap.getOrDefault(docId, 0.0);
-                            double total = currentScore + score + weightOfPos(pos);
-                            scoreshashmap.put(docId, total);
-                        }
-                        // System.out.println("********************"+" "+total);
-                    }
-                }
-            }
         }
     }
     public static Double weightOfPos(List<Integer> original) {
@@ -564,7 +524,7 @@ public class Ranker {
             map.put(entry.getKey(), entry.getValue());
             ObjectId key = entry.getKey();
             Double s = entry.getValue();
-            System.out.println(key + "  " + s);
+             System.out.println(key + "  " + s);
             resultsIds.add(key);
         }
     }

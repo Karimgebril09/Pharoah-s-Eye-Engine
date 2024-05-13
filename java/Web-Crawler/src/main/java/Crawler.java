@@ -1,3 +1,4 @@
+import org.bson.conversions.Bson;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -18,44 +19,27 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 
+import static com.mongodb.client.model.Filters.eq;
+import static java.lang.reflect.Array.set;
+
 public class Crawler {
-    private static HashMap<String,Integer> visitedurls = new HashMap<>();
+    //private static HashMap<String,Integer> visitedurls = new HashMap<>();
     private static HashMap<String,Integer> visitedurlsbody = new HashMap<>();
     private static BufferedWriter writer;
-    private static final int THREAD_NUM=1000;
-    private static final int MAX_DEPTH = 5;//levels max
+    private static final int THREAD_NUM=15;
+    private static final int MAX_DEPTH = 1;//levels max
     private static final int MAX_QUEUE_SIZE = 7000;//max crawler size
     public static MongoDatabase db;
     public static MongoCollection<org.bson.Document> DocRankCollection;
-   /* private static final String[] Seeds = {
-            "https://en.wikipedia.org/wiki/Main_Page",
-            "https://www.britannica.com/",
-            "https://www.nasa.gov/",
-            "https://www.nationalgeographic.com/",
-            "https://www.history.com/",
-            "https://www.scientificamerican.com/",
-            "https://www.bbc.com/",
-            "https://www.nytimes.com/",
-            "https://www.reddit.com/",
-            "https://www.youtube.com/",
-            "https://www.espn.com/",
-            "https://www.theguardian.com/uk/sport"
-            // Add more seeds as needed
-    };*/
-
-
-
     public static void main(String[] args) {
         List<String> Seeds = readSeedsFromFile("src/main/java/Seed.txt");
         Queue<String> UrlsQueue = new LinkedList<>(Seeds);
         Set<String> visitedUrls = new HashSet<>();
         try {
-            writer = new BufferedWriter(new FileWriter("src/main/java/output"));
+            writer = new BufferedWriter(new FileWriter("src/main/java/output2"));
         } catch (IOException e) {
             System.err.println("Error initializing BufferedWriter: " + e.getMessage());
         }
-
-        //crawl(UrlsQueue, visitedUrls,1);
 
         Thread[] crawlerThreads=new Thread[THREAD_NUM];
         for(int i=0;i<THREAD_NUM;i++){
@@ -95,7 +79,6 @@ public class Crawler {
                 System.out.println("Maximum queue size reached. Stopping crawler.");
                 break;
             }
-
             String currentUrl;
             synchronized (UrlsQueue) { //synchronize shared object to avoid corruption
                 currentUrl = UrlsQueue.poll();
@@ -103,10 +86,9 @@ public class Crawler {
                     continue; // Skip if the seed has already been visited
                 }
             }
-
             Document doc = request(currentUrl, visitedUrls);
             if (doc != null) {
-                List<String> outgoingLinks = new ArrayList<>();
+                Set<String> outgoingLinks = new HashSet<>();
                 for (Element link : doc.select("a[href]")) {
                     String nextLink = link.absUrl("href");
                     outgoingLinks.add(nextLink);
@@ -122,23 +104,46 @@ public class Crawler {
             }
         }
     }
-    public static void insertOutgoingLinksIntoDatabase(MongoClient client,String currentUrl,  List<String> outgoingLinks){
+    public static void insertOutgoingLinksIntoDatabase(MongoClient client, String currentUrl, Set<String> outgoingLinks) {
         try {
-            // Ensure connection is closed after use
             try (client) {
                 db = client.getDatabase("Salma");
-                MongoCollection<org.bson.Document> collection = db.getCollection("Ranker");
-                // Create document to insert
-                org.bson.Document paragraphDoc = new org.bson.Document();
-                paragraphDoc.append("url", currentUrl);
-                paragraphDoc.append("outgoings",outgoingLinks);
-                collection.insertOne(paragraphDoc);
+                MongoCollection<org.bson.Document> collection = db.getCollection("Rankerr");
+
+                // Check if document with currentUrl already exists
+                org.bson.Document existingDoc = collection.find(eq("url", currentUrl)).first();
+                if (existingDoc != null) {
+                    // Document with currentUrl already exists, update outgoings field
+                   /* ArrayList<String> existingOutgoings = existingDoc.get("outgoings", ArrayList.class);
+                    if (existingOutgoings == null) {
+                        existingOutgoings = new ArrayList<>();
+                    }
+                    for (String link : outgoingLinks) {
+                        existingOutgoings.add(link);
+                    }
+                    collection.updateOne(eq("url", currentUrl), new Document("$set", new Document("outgoings", existingOutgoings)));*/
+
+                    return;
+
+                } else {
+                    ArrayList<Document> outgoingLinksList = new ArrayList<>();
+                    for (String link : outgoingLinks) {
+                        outgoingLinksList.add(new Document("link", link));
+                    }
+                    org.bson.Document paragraphDoc = new org.bson.Document();
+                    paragraphDoc.append("url", currentUrl);
+                    paragraphDoc.append("outgoings",outgoingLinks);
+                    collection.insertOne(paragraphDoc);
+                }
             }
         } catch (MongoException e) {
-            System.err.println("Error inserting result: " + e.getMessage());
+            System.out.println("Error inserting/updating result: " + e.getMessage());
         }
-
     }
+
+
+
+
     public static MongoClient createConnection() {
         ConnectionString connectionString = new ConnectionString("mongodb://localhost:27017");
         try {
@@ -155,16 +160,14 @@ public class Crawler {
             // Parse the URL to get the domain
             URI uri = new URI(url);
             String domain = uri.getHost();
-
             // Fetch and parse the robots.txt file
             Document robotsTxt = Jsoup.connect("http://" + domain + "/robots.txt").get();
             String robotsTxtContent = robotsTxt.text();
-
             // Check if the URL is allowed based on the rules in robots.txt
             return !robotsTxtContent.contains(Thread.currentThread().getName()+" Disallow: " + uri.getPath());
         } catch (Exception e) {
             // Handle exceptions
-            System.err.println(Thread.currentThread().getName()+" Error in Connecting to the robot.txt or in parsing: " + url + ": " + e.getMessage());
+            System.out.println(Thread.currentThread().getName()+" Error in Connecting to the robot.txt or in parsing: " + url + ": " + e.getMessage());
             return false; // Assume the URL is not allowed in case of errors
         }
     }
@@ -176,7 +179,6 @@ public class Crawler {
                 System.out.println("URL not allowed by robots.txt: " + url);
                 return null;
             }
-
             // Normalize the URL using URI
             URI uri = new URI(url).normalize();
             String compactUrl = uri.toURL().toExternalForm();
@@ -198,18 +200,18 @@ public class Crawler {
                     }
                     return doc;
                 }
+
             }
             return null;
         } catch (URISyntaxException e) {
-            System.err.println("Error in URI syntax: " + url + ": " + e.getMessage());
+            System.out.println("Error in URI syntax: " + url + ": " + e.getMessage());
         } catch (MalformedURLException e) {
-            System.err.println("Malformed URL: " + url);
+            System.out.println("Malformed URL: " + url);
         } catch (IOException e) {
-            System.err.println("Error connecting to " + url + ": " + e.getMessage());
+            System.out.println("Error connecting to " + url + ": " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("Other error in request method for " + url + ": " + e.getMessage());
+            System.out.println("Other error in request method for " + url + ": " + e.getMessage());
         }
-
         return null;
     }
     private static boolean check_domain(String url)

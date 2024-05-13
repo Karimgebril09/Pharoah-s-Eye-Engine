@@ -13,6 +13,7 @@ public class PageRank {
     public static MongoDatabase db;
     public static MongoCollection<org.bson.Document> pageRankCollection;
     public static   Link[] links;
+    public static Set<String>recieved=new HashSet<>();
     static class Link {
         String url;
         double pageRank;
@@ -45,7 +46,9 @@ public class PageRank {
                 MongoCollection<org.bson.Document> collection = db.getCollection("Ranker");
                 List<Link> alllinks = new ArrayList<>();
                 for (org.bson.Document doc : collection.find()) {
+                    if(!recieved.contains(doc.getString("url"))){
                     String url = doc.getString("url");
+                    recieved.add(url);
                     Link link = new Link(url);
                     // Retrieve outgoing links array from the document
                     List<String> outgoingUrls = (List<String>) doc.get("outgoings");
@@ -54,6 +57,7 @@ public class PageRank {
                     }
                     // Add the created Link object to the list
                     alllinks.add(link);
+                    }
                 }
 
                 // Convert list to array
@@ -116,6 +120,7 @@ public class PageRank {
             System.err.println("Error updating popularity values: " + e.getMessage());
         }
     }
+
     // Main method to test the PageRank algorithm
     public static void main(String[] args) {
         MongoClient client = createConnection();
@@ -128,7 +133,7 @@ public class PageRank {
             final double DAMPING_FACTOR = 0.85; // Damping factor (typical value)
 
             // Calculate PageRank
-            calculatePageRank(100); // 10 iterations for convergence
+            calculatePageRank(10); // 10 iterations for convergence
 
             // Output PageRank values
             for (Link link : links) {

@@ -17,9 +17,9 @@ import org.bson.types.ObjectId;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import com.mongodb.client.model.Sorts;
-public class Ranker {
+public class Ranker3 {
     public static Set<String> stopWords = new HashSet<>();
-    private static final int THREAD_NUM=15;
+    private static final int THREAD_NUM=10;
     public static MongoDatabase db;
     public static MongoDatabase db2;
     public static MongoCollection<org.bson.Document> DocCollection;
@@ -45,7 +45,7 @@ public class Ranker {
         try {
             getStopwords(path);
             //////////////////////////////////////////////tested before calling the database
-            client = createConnection();
+           client = createConnection();
             if (client == null) {
                 System.err.println("Failed to create connection");
                 return;
@@ -104,10 +104,10 @@ public class Ranker {
                 } else {
                     //   System.err.println("ArrayOfdocs is null in wordDataMap: " + wordDataMap);
                 }*/
-            // System.out.println("passed");
+                // System.out.println("passed");
             Thread[] rankerThreads=new Thread[THREAD_NUM];
             for(int i=0;i<THREAD_NUM;i++){
-                rankerThreads[i]=new Thread(new Ranker.RunnableRanker(arrayOfDocs));
+                rankerThreads[i]=new Thread(new Ranker3.RunnableRanker(arrayOfDocs));
                 rankerThreads[i].start();
             }
             for(int i=0;i<THREAD_NUM;i++){

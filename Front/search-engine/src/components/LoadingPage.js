@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useHistory } from 'react-router-dom';
-import videoSource from './vid3.mp4'; // Importing the video file
+import videoSource from './vid4.mp4'; // Importing the video file
 
 const LoadingPage = () => {
   const [loading, setLoading] = useState(true);
@@ -40,15 +40,17 @@ const LoadingPage = () => {
   }, [history]); // Include history in the dependency array to avoid eslint warning
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+    <div className="loading">
       {loading ? (
-        <video width="720" height="540" controls autoPlay  playsInline>
-          <source src={videoSource} type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
-      ) : null}
+        <div className="center-body">
+          <div className="loader-circle-9">
+            Loading
+            <span></span>
+          </div>
+        </div>
+      ) :null}
     </div>
-  );
+);
 };
 
 export default LoadingPage;
