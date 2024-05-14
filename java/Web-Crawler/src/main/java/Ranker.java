@@ -22,6 +22,7 @@ public class Ranker {
     private static final int THREAD_NUM=15;
     public static MongoDatabase db;
     public static MongoDatabase db2;
+    public static List<String> operations=new ArrayList<>();
     public static MongoCollection<org.bson.Document> DocCollection;
     public static MongoCollection<org.bson.Document> WordsCollection;
     public static MongoCollection<org.bson.Document> WordDocCollection;
@@ -41,7 +42,7 @@ public class Ranker {
         // Capture the current time after running the code
         long startTime = System.currentTimeMillis();
 
-        String path="src/main/java/Stopwords.txt";//Step1 extracting StopWords
+        String path="D:\\Pharoah_eye_project\\Pharoah-s-Eye-Engine\\java\\Web-Crawler\\src\\main\\java\\Stopwords.txt";//Step1 extracting StopWords
         try {
             getStopwords(path);
             //////////////////////////////////////////////tested before calling the database
@@ -52,24 +53,23 @@ public class Ranker {
             }
             List<Integer> posy = Arrays.asList(1, 1, 0, 0, 0, 0, 0, 0);
             System.out.println(weightOfPos(posy));
-            Document queryDocument = getLastInsertedQuery(client);
+            Document queryDocument = getLastInsertedQuery();
             query=extractQuery(queryDocument);
             System.out.println(query);
             needFiller =check(query);
+            separator(query);
             System.out.println(needFiller);
             afterProcessing = queryProcessing(query);
             System.out.println(afterProcessing);
             System.out.println("passed");
             //////////////////////////
-            client = createConnection();
-            updatePopularity(client);
+            updatePopularity();
             /////////////////////////////////
             Document document;
             HashMap<String, Object> wordData;
             for (String token : afterProcessing) {
-                client = createConnection();
                 if(token !=null){
-                    document = getWord(client, token);
+                    document = getWord(token);
                     if (document != null) {
                         wordData = wordData(document);
                         System.out.println(wordData.get("_id"));
@@ -122,16 +122,13 @@ public class Ranker {
             long sorte=System.currentTimeMillis();
             long secstart=System.currentTimeMillis();
             HashMap<String,Object>docData;
-            client = createConnection();
-            dropCollection(client);
+            dropCollection();
             for (ObjectId temp:resultsIds) {
-                client = createConnection();
-                document = getDoc(client, temp);
+                document = getDoc(temp);
                 if (document != null) {
                     docData = docData(document);
                     finalResult.add(docData);
-                    client = createConnection();
-                    insertresult(docData,client);
+                    insertresult(docData);
 
                 } else {
                     System.out.println("this doc is not in the indexer");
@@ -189,13 +186,11 @@ public class Ranker {
                     synchronized (arrayOfDocs) {
                         temp = arrayOfDocs.removeFirst();
                     }
-                    client = createConnection();
-                    Document doc = getWordDoc(client, temp);
+                    Document doc = getWordDoc(temp);
                     if (doc != null) {
                         temphash2 = DocWordData(doc);
                         ObjectId docId = (ObjectId) temphash2.get("Docid");
-                        client = createConnection();
-                        Document doc2 = getDoc(client, docId);
+                        Document doc2 = getDoc(docId);
                         if (doc2 != null) {
                             HashMap<String, Object> temphash3 = docData(doc2);
                             score = (Double) wordDataMap.get("IDF") * (Double) temphash2.get("tf") + (Double) temphash3.get("popularity");
@@ -258,45 +253,27 @@ public class Ranker {
 
         return foundQuotes;
     }
-    public static void insertresult(HashMap<String, Object> docData, MongoClient client) {
-        try {
-            // Ensure connection is closed after use
-            try (client) {
-                db2 = client.getDatabase("Salma");
-                MongoCollection<Document> collection = db2.getCollection("result");
-                // Extract the first three lines of the body as the paragraph preview
-                String paragraphPreview = findParagraph(joinLines((String) docData.get("body")));
-                if(paragraphPreview==null)
+    public static void insertresult(HashMap<String, Object> docData) throws IOException {
+            db2 = client.getDatabase("Salma");
+            MongoCollection<Document> collection = db2.getCollection("result");
+            // Extract the first three lines of the body as the paragraph preview
+            String paragraphPreview = findParagraph(joinLines((String) docData.get("body")));
+            if(paragraphPreview==null)
 
-                    return;
-                // System.out.println(paragraphPreview);
-                //System.out.println("******************************************");
-                // Create document to insert
-                Document paragraphDoc = new Document();
-                paragraphDoc.append("title", (String) docData.get("title"));
-                paragraphDoc.append("url", (String) docData.get("url"));
-                paragraphDoc.append("paragraph", paragraphPreview);
-                collection.insertOne(paragraphDoc);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        } catch (MongoException e) {
-            System.err.println("Error inserting result: " + e.getMessage());
-        }
+                return;
+            // System.out.println(paragraphPreview);
+            //System.out.println("******************************************");
+            // Create document to insert
+            Document paragraphDoc = new Document();
+            paragraphDoc.append("title", (String) docData.get("title"));
+            paragraphDoc.append("url", (String) docData.get("url"));
+            paragraphDoc.append("paragraph", paragraphPreview);
+            collection.insertOne(paragraphDoc);
     }
-    public static void dropCollection( MongoClient client) {
-        try {
-            // Ensure connection is closed after use
-            try (client) {
-                MongoDatabase database = client.getDatabase("Salma");
-                database.getCollection("result").drop();
-                System.out.println("Collection " + "result" + " dropped successfully.");
-            } catch (Exception e) {
-                System.err.println("Error dropping collection: " + e.getMessage());
-            }
-        } catch (Exception e) {
-            System.err.println("Error connecting to MongoDB: " + e.getMessage());
-        }
+    public static void dropCollection() {
+            MongoDatabase database = client.getDatabase("Salma");
+            database.getCollection("result").drop();
+            System.out.println("Collection " + "result" + " dropped successfully.");
     }
 
     public static String findParagraph(String text) throws IOException {
@@ -312,10 +289,11 @@ public class Ranker {
         Boolean keep=false;
         Pattern pattern;
         Matcher matcher;
+        ///////////////////////////////////
         if(needFiller)
         {
             for (String phrase : tempWithoutQuotes) {
-                System.out.println("insideeeee");
+//                System.out.println("insideeeee");
                 pattern = Pattern.compile("\\b" + Pattern.quote(phrase) + "\\b");
                 matcher = pattern.matcher(text);
                 if (matcher.find()) {
@@ -324,26 +302,132 @@ public class Ranker {
                 }
             }
             if(!keep)
+//                System.out.println("in");
+            return null;
+        }
+        /////////////////////////////////////////
+//        System.out.println("outtttttttttttt");
+      /*  if(needAnd)
+        {
+            int counter=0;
+            for (String phrase : tempAnd) {
+                pattern = Pattern.compile("\\b" + Pattern.quote(phrase) + "\\b");
+                matcher = pattern.matcher(text);
+
+                // Count occurrences of the phrase in the text
+                while (matcher.find()) {
+                    counter++;
+                }
+            }
+            if(counter!=tempAnd.size())
+            {
+                return null;
+            }
+        }
+        /////////////////////////////////////
+        if(needOr)
+        {
+             int counter=0;
+            for (String phrase : tempOr) {
+                pattern = Pattern.compile("\\b" + Pattern.quote(phrase) + "\\b");
+                matcher = pattern.matcher(text);
+
+                // Count occurrences of the phrase in the text
+                while (matcher.find()) {
+                    counter++;
+                }
+            }
+            if(counter==0)
+            {
+                return null;
+            }
+        }
+        /////////////////////////////////////////
+        if(needNot)
+        {
+            int counter=0;
+            for (String phrase : tempNot) {
+                if(counter%2==1)
+                {
+                    pattern = Pattern.compile("\\b" + Pattern.quote(phrase) + "\\b");
+                    matcher = pattern.matcher(text);
+
+                    // Count occurrences of the phrase in the text
+                    while (matcher.find()) {
+                       return null;
+                    }
+                }
+                counter++;
+            }
+        }*/
+        int res=0;
+        if (operations.size() > 1) {
+            int res1 = 0;
+            int res2 = 0;
+            int res3 = 0;
+
+            // Count occurrences of the first operation
+            pattern = Pattern.compile("\\b" + Pattern.quote(operations.get(0)) + "\\b");
+            matcher = pattern.matcher(text);
+            while (matcher.find()) {
+                res1 = 1;
+            }
+
+            // Count occurrences of the second operation
+            pattern = Pattern.compile("\\b" + Pattern.quote(operations.get(1)) + "\\b");
+            matcher = pattern.matcher(text);
+            while (matcher.find()) {
+                res2 = 1;
+            }
+
+            // If there are three operations, count occurrences of the third operation
+            if (operations.size() == 5) {
+                pattern = Pattern.compile("\\b" + Pattern.quote(operations.get(2)) + "\\b");
+                matcher = pattern.matcher(text);
+                while (matcher.find()) {
+                    res3 = 1;
+                }
+            }
+
+            // Combine results based on the operations
+            if (operations.size() == 3) {
+                // If there are two operations, combine res1 and res2 based on the second operation
+                if (operations.get(2).equals("AND")) {
+                    res = res1 & res2;
+                } else if (operations.get(2).equals("OR")) {
+                    res = res1 | res2;
+                } else if (operations.get(2).equals("NOT")) {
+                    res = res1 & ~res2;
+                }
+            } else if (operations.size() == 5) {
+                // If there are three operations, combine res1, res2, and res3 based on the second and fourth operations
+                if (operations.get(3).equals("AND")) {
+                    res = res1 & (operations.get(4).equals("AND") ? res2 & res3 : res2 | res3);
+                } else if (operations.get(3).equals("OR")) {
+                    res = res1 | (operations.get(4).equals("AND") ? res2 & res3 : res2 | res3);
+                } else if (operations.get(3).equals("NOT")) {
+                    res = res1 & ~(operations.get(4).equals("AND") ? res2 & res3 : res2 | res3);
+                }
+            }
+            System.out.println(res);
+            if(res==0)
                 return null;
         }
-
+        /////////////////////////////////////////
         // Iterate over each word
         int wordCount = 0;
-
+        System.out.println("******************");
         StringBuilder currentGroup = new StringBuilder();
         List<String> group = new ArrayList<>();
         for (String word : words) {
             // Add the word to the current group
             group.add(word);
             wordCount++;
-
             currentGroup.append(word).append(" ");
-
             // If the current group reaches 50 words or all words are processed
             if (wordCount == 50 || wordCount == words.size()) {
                 // Check if any word in the group is in the set of queries
                 ArrayList<String> lis= queryProcessing(currentGroup.toString());
-
                 for(String word2 : afterProcessing) {
                     if (lis.contains(word2))
                     {
@@ -379,8 +463,7 @@ public class Ranker {
         }
         return result.toString();
     }
-    public static Document getWordDoc(MongoClient client, ObjectId id) {
-        try (client) {  // Ensure connection is closed after use
+    public static Document getWordDoc(ObjectId id) {
             db = client.getDatabase("test");
             WordDocCollection = db.getCollection("Word_Document");  // Not needed here
             //System.out.println(WordDocCollection.countDocuments());
@@ -390,13 +473,8 @@ public class Ranker {
                 return null;
             }
             return document;
-        } catch (MongoException e) {
-            System.err.println("Error retrieving document: " + e.getMessage());
-            return null;
-        }
     }
-    public static Document getWordDoc2(MongoClient client, ObjectId id, ObjectId docid) {
-        try (client) {  // Ensure connection is closed after use
+    public static Document getWordDoc2( ObjectId id, ObjectId docid) {
             db = client.getDatabase("test");
             WordDocCollection = db.getCollection("Word_Document");  // Not needed here
             //System.out.println(WordDocCollection.countDocuments());
@@ -409,13 +487,8 @@ public class Ranker {
                 return null;
             }
             return document;
-        } catch (MongoException e) {
-            System.err.println("Error retrieving document: " + e.getMessage());
-            return null;
-        }
     }
-    public static Document getWord(MongoClient client, String word) {
-        try (client) {  // Ensure connection is closed after use
+    public static Document getWord(String word) {
             db = client.getDatabase("test");
             WordsCollection = db.getCollection("Words");
             // System.out.println(WordsCollection.countDocuments());
@@ -426,13 +499,9 @@ public class Ranker {
             }
             System.out.println("Documents were found with word: " + word);
             return document;
-        } catch (MongoException e) {
-            System.out.println("Error retrieving document: " + e.getMessage());
-            return null;
-        }
     }
-    public static Document getDoc(MongoClient client, ObjectId id) {
-        try (client) {  // Ensure connection is closed after use
+    public static Document getDoc( ObjectId id) {
+   // Ensure connection is closed after use
             db = client.getDatabase("test");
             DocCollection = db.getCollection("documents");  // Not needed here
             Document document = DocCollection.find(new Document("_id", id)).first();
@@ -441,27 +510,22 @@ public class Ranker {
                 return null;
             }
             return document;
-        } catch (MongoException e) {
-            System.err.println("Error retrieving document: " + e.getMessage());
-            return null;
-        }
     }
-    public static Document getLastInsertedQuery(MongoClient client) {
+    public static Document getLastInsertedQuery() {
         try {
             // Ensure connection is closed after use
-            try (client) {
-                db2 = client.getDatabase("Salma");
-                MongoCollection<Document> queryCollection = db2.getCollection("query");
-                // Sort documents in descending order based on the _id field
-                Document lastQuery = queryCollection.find()
-                        .sort(Sorts.descending("_id"))
-                        .first();
-                if (lastQuery == null) {
-                    System.err.println("No documents found in the 'query' collection.");
-                    return null;
-                }
-                return lastQuery;
+            db2 = client.getDatabase("Salma");
+            MongoCollection<Document> queryCollection = db2.getCollection("query");
+            // Sort documents in descending order based on the _id field
+            Document lastQuery = queryCollection.find()
+                    .sort(Sorts.descending("_id"))
+                    .first();
+            if (lastQuery == null) {
+                System.err.println("No documents found in the 'query' collection.");
+                return null;
             }
+            return lastQuery;
+
         } catch (MongoException e) {
             System.err.println("Error retrieving last inserted query: " + e.getMessage());
             return null;
@@ -611,7 +675,7 @@ public class Ranker {
 
         return details;
     }
-    public static void updatePopularity(MongoClient client ) {
+    public static void updatePopularity() {
         try {
             db = client.getDatabase("test");
             MongoCollection<Document> collection = db.getCollection("documents");
@@ -640,5 +704,34 @@ public class Ranker {
     private static String extractQuery(Document document) {
         String query = document.getString("Query");
         return query;
+    }
+
+    public static void separator(String text)
+    {
+        Pattern pattern = Pattern.compile("\b(AND|OR|NOT)\b");
+        Matcher matcher = pattern.matcher(query);
+
+        // Split the query using the operators
+        String[] parts = pattern.split(query);
+
+        // Add the parts to the operations array
+        for (String part : parts) {
+            if (!part.trim().isEmpty()) {
+                operations.add(part.trim());
+            }
+        }
+
+        // Add the operators to the operations array
+        while (matcher.find()) {
+            operations.add(matcher.group().trim());
+        }
+
+        // Print the operations array
+        System.out.println(operations);
+
+        System.out.println("////");
+        System.out.println(operations.size());
+        System.out.println(operations);
+
     }
 }
