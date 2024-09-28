@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useHistory } from 'react-router-dom';
-import videoSource from './vid4.mp4'; // Importing the video file
 
 const LoadingPage = () => {
   const [loading, setLoading] = useState(true);
